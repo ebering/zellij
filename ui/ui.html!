@@ -1,0 +1,104 @@
+<html>
+<head>
+<title>Zelij Tiling!</title>
+
+<script type="text/javascript">
+
+var canvas;
+var ctx;
+
+var points = new Array();
+var numpoints = 0;
+
+function Point(x,x2,y,y2) {
+	this.x = x;
+	this.x2 = x2;
+	this.y = y;
+	this.y2 = y2;
+
+	this.toString = function () {
+		return (this.x+","+this.x2+","+this.y+","+this.y2);
+	}
+} 
+
+function beginDrawing() {
+	numpoints = 0;
+	clearCanvas();
+	document.getElementById("render").style.display = 'none';
+	document.getElementById("preview").style.display = 'block';
+}
+
+function mouseClickCanvasCoordinates(event) {
+	var x = event.clientX + document.body.scrollLeft +
+            document.documentElement.scrollLeft - canvas.offsetLeft;
+	var y = event.clientY + document.body.scrollTop +
+            document.documentElement.scrollTop - canvas.offsetTop;
+	return new Point(x,0,y,0);
+}
+
+function pointClick(event) {
+	points[numpoints] = mouseClickCanvasCoordinates(event);
+	numpoints++;
+
+	clearCanvas();
+	drawPoints();
+}
+
+function drawPoints() {
+	if( numpoints < 2 ) {
+		return;
+	}
+
+	ctx.beginPath();
+	ctx.moveTo(points[0].x,points[0].y);
+
+	for(var i = 1; i < numpoints; i++) {
+		ctx.lineTo(points[i].x,points[i].y);
+	}
+
+	if( numpoints >= 3 ) {
+		ctx.closePath();
+	}
+
+	ctx.stroke();
+}
+
+function clearCanvas() {
+	ctx.clearRect(0,0,canvas.width,canvas.height);
+}	
+
+
+function renderTiles() {
+
+	var srcstr = "svg?skeleton="+points[0].toString();
+	
+	for(var i = 1; i < numpoints; i++) {
+		srcstr += "&skeleton="+points[i].toString();
+	}
+
+	document.getElementById("render").src = srcstr;
+	document.getElementById("preview").style.display = 'none';
+	document.getElementById("render").style.display = 'block';
+}
+
+function init() {
+	canvas = document.getElementById("preview");
+	ctx = canvas.getContext('2d');
+
+	canvas.addEventListener("click",pointClick,false);
+}
+
+</script>
+</head>
+
+<body onload="init()">
+<div id="menu">
+<a href="#foo"  onclick="beginDrawing()" >Start Drawing</a>
+<a href="#foo"  onclick="renderTiles()" >Render</a>
+</div>
+<canvas id="preview" width=600 height=600 style="border: 1px solid #000000;">
+Oh no something is wrong
+</canvas>
+<iframe src="svg" id="render" width=600 height=600 style="display: none;"/>
+</body>
+</html>
