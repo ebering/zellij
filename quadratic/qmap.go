@@ -1,11 +1,8 @@
 package quadratic
 
-import "container/list"
 import "container/vector"
 import "sort"
-import "os"
 import "math"
-import "fmt"
 
 // Stores a vertex, which is a point that has a list of incident edges
 // IMPORTANT INVARIANT: The vector of outgoing edges is a vector of things of type *Edge and it is KEPT IN SORTED ORDER BY HEADING
@@ -28,7 +25,10 @@ func (v * Vertex) EdgeIndexCounterClockwiseOf(e *Edge) int {
 		return e.Less(v.outgoingEdges.At(i))
 	})
 }
-	
+
+func (v *Vertex) Less(u interface{}) bool {
+	return v.Point.Less(u.(*Vertex).Point)
+}
 
 // Stores a directed half edge in a planar map
 type Edge struct {
@@ -43,6 +43,10 @@ func (e * Edge) Coterminal(f * Edge) bool {
 		e.start.Point.Equal(f.end.Point) ||
 		e.end.Point.Equal(f.start.Point) ||
 		e.end.Point.Equal(f.end.Point)
+}
+
+func (e * Edge) Equal( f * Edge) bool {
+	return e.start.Point.Equal(f.start.Point) && e.end.Point.Equal(f.end.Point)
 }
 
 func (e * Edge) Line() (*Line){
@@ -74,11 +78,11 @@ type Face struct {
 
 // Represents a planar map
 type Map struct {
-	verticies, edges, faces *list.List
+	Verticies, Edges, Faces *vector.Vector
 }
 
 func NewMap() (* Map) {
-	return &Map{new(list.List),new(list.List),new(list.List)}
+	return &Map{new(vector.Vector),new(vector.Vector),new(vector.Vector)}
 }
 
 
@@ -155,166 +159,75 @@ func (e *Edge) Twin() (*Edge){
 }
 
 func (m *Map) AddVertex(p * Point) (* Vertex) {
-	L := m.verticies
-	for l := L.Front(); l != nil; l = l.Next() {
-		if( l.Value.(*Vertex).Point.Equal(p)) {
-			return l.Value.(*Vertex)
+	V := m.Verticies
+	for i :=0; i < V.Len(); i++ {
+		if( V.At(i).(*Vertex).Point.Equal(p)) {
+			return V.At(i).(*Vertex)
 		}
 	}
 	nv := NewVertex(p)
-	_ = m.verticies.PushFront(nv)
+	m.Verticies.Push(nv)
 	return nv
 }	
 
 func (m *Map) JoinVerticies(u * Vertex, v * Vertex) (* Edge) {
 	e,eTwin := NewEdgePair(u,v)
-	_ = m.edges.PushFront(e)
-	_ = m.edges.PushFront(eTwin)
+	m.Edges.Push(e)
+	m.Edges.Push(eTwin)
 	return e
-}
-
-// Adds an edge e to a planar map m
-// Does not alter e
-// Does not handle intersections or coincident edges that do not share endpoints at present
-// Does not update face information
-func (m *Map) AddEdge(e *Edge) (os.Error) {
-	if m.edges.Front() == nil {
-		_ = m.edges.PushFront(e)
-		_ = m.edges.PushFront(e.twin)
-		_ = m.verticies.PushFront(e.start)
-		_ = m.verticies.PushFront(e.end)
-		return nil
-	}
-		
-	L := m.edges
-	
-	// Check for edge overlap, coincidence, and intersection
-	for l := L.Front(); l != nil; l = l.Next() {
-		f,ok := l.Value.(*Edge)
-		if !ok {
-			panic("Something is terribly wrong with the planar map")
-		}
-		if e.start.Point.Equal(f.start.Point) && e.end.Point.Equal(f.end.Point) {
-			f.newFace = e.face
-			f.twin.newFace = e.twin.face
-			return nil
-		}
-		if e.start.Point.Equal(f.end.Point) && e.end.Point.Equal(f.start.Point) {
-			f.newFace = e.twin.face
-			f.twin.newFace = e.face
-			return nil
-		}
-		fLine := f.Line()
-		if (fLine.On(e.start.Point) || fLine.On(e.end.Point)) && e.Parallel(f) && !e.Coterminal(f) {
-			return os.NewError(fmt.Sprintf("Coincident non-coterminal edges %v, %v not supported",e,f))
-		}
-		cross,_,_ := fLine.IntersectAsFloats(e.Line()) 
-		if cross && !( e.start.Point.Equal(f.start.Point) || e.end.Point.Equal(f.start.Point) || e.start.Point.Equal(f.end.Point) || e.end.Point.Equal(f.end.Point)) {
-			return os.NewError("Edges intersecting not at endpoints not supported")
-		}
-	}
-
-	for l := L.Front(); l != nil; l = l.Next() {
-		f,ok := l.Value.(*Edge)
-		if !ok {
-			return os.NewError("Something is terribly wrong with your planar map")
-		}
-		if e.start.Point.Equal(f.start.Point) {
-			nv := m.AddVertex(e.end.Point)
-			a := m.JoinVerticies(f.start,nv)
-			a.newFace = e.face
-			a.twin.newFace = e.twin.face
-			return nil
-		}
-		if e.end.Point.Equal(f.start.Point) {
-			nv := m.AddVertex(e.start.Point)
-			a := m.JoinVerticies(f.start,nv)
-			a.newFace = e.face
-			a.twin.newFace = e.twin.face
-			return nil
-		}
-	}
-
-	u := m.AddVertex(e.start.Point)
-	v := m.AddVertex(e.end.Point)
-	f := m.JoinVerticies(u,v)
-	f.newFace = e.face
-	f.twin.newFace = e.twin.face
-	return nil
-}
-
-// Merge n into m
-func (m *Map) Merge(n * Map) (os.Error) {
-	newEdges := n.edges
-
-	for l := newEdges.Front(); l != nil; l = l.Next() {
-		e,_ := l.Value.(*Edge)
-		if e.start.Less(e.end.Point) {
-			ok := m.AddEdge(e)
-			if ok != nil {
-				return ok
-			}
-		}
-	}
-
-	for l := m.edges.Front(); l != nil; l = l.Next() {
-		e,_ := l.Value.(*Edge)
-		if e.newFace != nil {
-			if e.face == nil {
-				e.face = e.newFace
-			} else if e.face.Value.(string) == e.newFace.Value.(string) && e.face.Value.(string) == "inner" {
-				return os.NewError("Overlapping inner faces not allowed")
-			} else if e.newFace.Value.(string) == "inner" {
-				e.face = e.newFace
-			}
-			e.newFace = nil
-		}
-	}
-
-	return nil
 }
 
 func (m *Map) Copy() (* Map) {
 	c := NewMap()
-	for l := m.verticies.Front(); l != nil; l = l.Next() {
-		cv := NewVertex(l.Value.(*Vertex).Copy())
-		l.Value.(*Vertex).copy = cv
-		c.verticies.PushBack(cv)
-	}
-	for l := m.edges.Front(); l != nil; l = l.Next() {
-		e := l.Value.(*Edge)
+	m.Verticies.Do(func (v interface{}) {
+		cv := NewVertex(v.(*Vertex).Copy())
+		v.(*Vertex).copy = cv
+		c.Verticies.Push(cv)
+	})
+	m.Edges.Do(func (f interface{}) {
+		e := f.(*Edge)
 		if e.start.Point.Less(e.end.Point) {
 			c.JoinVerticies(e.start.copy,e.end.copy)
 		}
-	}
+	})
 	return c
-}
-
-func (m *Map) DoVerticies(f func (*Vertex)) {
-	L := m.verticies
-	for l := L.Front(); l != nil; l = l.Next() {
-		f(l.Value.(*Vertex))
-	}
-}
-
-func (m *Map) DoEdges(f func (*Edge)) {
-	L := m.edges
-	for l := L.Front(); l != nil; l = l.Next() {
-		f(l.Value.(*Edge))
-	}
-}
-
-func (m *Map) DoFaces(f func (*Face)) {
-	L := m.faces
-	for l := L.Front(); l != nil; l = l.Next() {
-		f(l.Value.(*Face))
-	}
 }
 
 func (m *Map) Translate(from,to *Vertex) (*Map) {
 	T := MakeTranslation(from.Point,to.Point)
-	m.DoVerticies(func (v *Vertex) {
-		v.Point = T(v.Point)
+	m.Verticies.Do(func (v interface{}) {
+		v.(*Vertex).Point = T(v.(*Vertex).Point)
 	})
 	return m
+}
+
+func (m *Map) AdjacencyMatrix() [][]bool {
+	mat := make([][]bool,m.Verticies.Len())
+	for i,_ := range(mat) {
+		mat[i] = make([]bool,m.Verticies.Len())
+	}
+	sort.Sort(m.Verticies)
+	for i:=0; i < m.Verticies.Len(); i++ {
+		u := m.Verticies.At(i).(*Vertex)
+		for j:=0; j < m.Verticies.Len(); j++ {
+			if i == j { continue }
+			v := m.Verticies.At(j).(*Vertex)
+			u.outgoingEdges.Do(func (e interface{}) {
+				mat[i][j] = mat[i][j] || v.Equal(e.(*Edge).end.Point)
+			})
+		}
+	}
+	return mat
+}
+
+func (m *Map) Isomorphic(n *Map) bool {
+	if m.Verticies.Len() != n.Verticies.Len() || m.Edges.Len() != n.Edges.Len() { return false }
+	mA := m.AdjacencyMatrix()
+	nA := n.AdjacencyMatrix()
+	for i,r := range(mA) {
+		for j,v := range(r) {
+			if v != nA[i][j] { return false }
+		}
+	}
+	return true
 }

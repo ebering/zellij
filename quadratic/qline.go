@@ -1,6 +1,8 @@
 package quadratic
 
 import "math"
+//import "fmt"
+//import "os"
 
 type Line struct {
 	start,end *Point
@@ -22,6 +24,14 @@ func NewLine(p1,p2 *Point) (*Line) {
 	return l
 }
 
+func (l *Line) Vertical() bool {
+	return l.deltax.Equal(&Integer{0,0})
+}
+
+func (l *Line) Horizontal() bool {
+	return l.deltay.Equal(&Integer{0,0})
+}
+
 func (l *Line) On(p *Point) (bool) {
 	lhs := l.deltax.Mul(p.y.Sub(l.start.y))
 	rhs := l.deltay.Mul(p.x.Sub(l.start.x))
@@ -39,11 +49,52 @@ func (l *Line) FloatOn(x,y float64) (bool) {
 	return math.Fabs(lhs-rhs) < FLOAT64_EPSILON  && ( l.start.x.Float64() < x && x < l.end.x.Float64() || l.deltax.Equal(&Integer{0,0}) && l.start.y.Float64() < y && y < l.end.y.Float64())
 }
 
+// determines if p is below l
 func (l *Line) Below(p *Point) (bool) {
 	lhs := l.deltax.Mul(p.y.Sub(l.start.y))
 	rhs := l.deltay.Mul(p.x.Sub(l.start.x))
 
-	return rhs.Less(lhs)
+	return lhs.Less(rhs)
+}
+
+// Determines if l < m in the plane sweep line ordering, assuming the sweep is currently at p
+func (l *Line) LessAt(m *Line,p *Point) bool {
+	// First special case, l,m isect at p, in which case go by slope
+	//fmt.Fprintf(os.Stderr,"Testing: %v and %v",l,m)
+	if l.On(p) && m.On(p) {
+		//fmt.Fprintf(os.Stderr," by slope: %v\n",l.end.y.Less(m.end.y))
+		return l.end.y.Less(m.end.y)
+	}
+
+	// Cases for vertical lines:
+	// l,m vertical, compare start points:
+	if l.Vertical() && m.Vertical() {
+		//fmt.Fprintf(os.Stderr," by height (both vert): %v\n",l.end.y.Less(m.end.y))
+		return l.start.y.Less(m.end.y)
+
+	// l vertical m not, do case analysis on new yorker subscription card
+	} else if l.Vertical() {
+		//fmt.Fprintf(os.Stderr," by l vertical: %v (cmp %v) || %v || %v (cmp %v) && %v\n", m.Below(l.end),l.end.y.Less(m.start.y),m.On(l.end),m.Below(l.start),l.start.y.Less(m.end.y) ,m.Below(p) )
+		return m.Below(l.end) || m.On(l.end) || (m.Below(l.start) && m.Below(p) )
+
+	// m vertical, l not, do above but take negation
+	} else if m.Vertical() {
+		//fmt.Fprintf(os.Stderr," by m vertical: %v\n",l.Below(p))
+		return !(l.Below(m.end) || l.On(m.end) || (l.Below(m.start) && l.Below(p) )) 
+
+	// l, m both horizontal
+	} else if l.Horizontal() && m.Horizontal() {
+		//fmt.Fprintf(os.Stderr," by both horizontal: %v\n", l.start.y.Less(m.start.y))
+		return l.start.y.Less(m.start.y)
+	}
+
+	// General case:
+	// derived from l(p.x) <? m(p.x) but compensates for possible non-invertibility
+	// of deltax
+	lhs := m.deltax.Mul(l.deltay.Mul(p.x.Sub(l.start.x))).Add(l.start.y)
+	rhs := l.deltax.Mul(m.deltay.Mul(p.x.Sub(m.start.x))).Add(m.start.y)
+	//fmt.Fprintf(os.Stderr," by general case: %v\n",lhs.Less(rhs))
+	return lhs.Less(rhs)
 }
 
 func (l *Line) IntersectAsIntegers(m *Line) (bool, *Point) {
@@ -104,4 +155,3 @@ func (l *Line) IntersectAsFloats(m *Line) (bool, float64,float64) {
 		
 	return l.FloatOn(x,y) && m.FloatOn(x,y),x,y
 }
-

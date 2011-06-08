@@ -23,12 +23,13 @@ func (l *Line) Draw(ctx *cairo.Surface) {
 }
 
 func (m *Map) DrawEdges(ctx *cairo.Surface) {
-	m.DoEdges(func (e *Edge) {
-		if e.start.Less(e.end.Point) {
+	m.Edges.Do(func (f interface{} ) {
+		e,_ := f.(*Edge)
+		if e.start.Less(e.end) {
 			e.Line().Draw(ctx)
 		}
 	})
-	m.DoVerticies(func (v *Vertex) {
-		v.Draw(ctx)
+	m.Verticies.Do(func (v interface{}) {
+		v.(*Vertex).Draw(ctx)
 	})
 }
