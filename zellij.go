@@ -31,9 +31,9 @@ func init() {
 	Points["v"], _ = quadratic.PointFromString("2,0,-2,0")
 	Points["w"], _ = quadratic.PointFromString("0,0,0,-2")
 
-	Tiles = make([]string, 1)
+	Tiles = make([]string, 2)
 	Tiles[0] = "adehnrvuwtspjgbc"
-	//Tiles[1] = "beovsi"
+	Tiles[1] = "beovsi"
 }
 
 func TileMap(s string) *quadratic.Map {
@@ -42,6 +42,13 @@ func TileMap(s string) *quadratic.Map {
 		tilePoints[i] = Points[string(c)].Copy()
 	}
 	return quadratic.PolygonMap(tilePoints)
+}
+func PathMap(s string) *quadratic.Map {
+	tilePoints := make([]*quadratic.Point, len(s))
+	for i, c := range s {
+		tilePoints[i] = Points[string(c)].Copy()
+	}
+	return quadratic.PathMap(tilePoints)
 }
 
 func TileRegion(xmin,xmax,ymin,ymax *quadratic.Integer) (<-chan *quadratic.Map, chan<- int) {
@@ -63,13 +70,14 @@ func TileRegion(xmin,xmax,ymin,ymax *quadratic.Integer) (<-chan *quadratic.Map, 
 }
 
 func addTile(sink chan<- *quadratic.Map, T *quadratic.Map, t string) {
-	T.DoVerticies(func (v *quadratic.Vertex) {
+	T.Verticies.Do(func (l interface{}) {
+		v := l.(*quadratic.Vertex)
 		q := TileMap(t)
-		q.DoVerticies(func (u *quadratic.Vertex) {
+		q.Verticies.Do(func (l interface{}) {
+			u := l.(*quadratic.Vertex)
 			if !v.Point.Equal(u.Point) {
-				Q := T.Copy()
-				ok := Q.Merge(q.Copy().Translate(u,v))
-				if ok == nil {
+				Q,ok := T.Overlay(q.Copy().Translate(u,v))
+				if ok == nil && !Q.Isomorphic(T) {
 					sink <- Q
 				} 
 			}

@@ -30,11 +30,23 @@ func MainScreen(w http.ResponseWriter, req *http.Request) {
 func RenderTiles(w http.ResponseWriter, req *http.Request) {
 	e := os.Remove("svg/test-surface.svg")
 	if e != nil {
-		os.Stderr.WriteString(e.String())
+		os.Stderr.WriteString(e.String()+"\n")
 	}	
 	
 	t := <-ZellijTilings
 
+	/*t := zellij.PathMap("tspjgbc")
+	u := zellij.PathMap("tspjg").Translate(quadratic.NewVertex(zellij.Points["j"]),quadratic.NewVertex(zellij.Points["p"]))
+	v,ok := t.Overlay(u)
+	if ok != nil {
+		os.Stderr.WriteString(ok.String()+"\n")
+	}
+	v,ok = u.Overlay(t)
+	if ok != nil {
+		os.Stderr.WriteString(ok.String()+"\n")
+	}
+	t = v*/
+	
 	image := cairo.NewSurface("svg/test-surface.svg",72*4,72*4)
 	image.SetSourceRGB(0.,0.,0.)
 	image.SetLineWidth(.1)
@@ -83,7 +95,7 @@ func RenderSVG(w http.ResponseWriter, req *http.Request) {
 	}
 
 	for i:=1; i < len(polys); i++ {
-		e := maps[0].Merge(maps[i])
+		_,e := maps[0].Overlay(maps[i])
 		if e != nil {
 			os.Stderr.WriteString(e.String())
 		}
