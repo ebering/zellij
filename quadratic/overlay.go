@@ -37,20 +37,25 @@ func (s *sweepStatus) Swap(i,j int) {
 
 func (m *Map) Overlay(n * Map) (*Map,os.Error) {
 	o := NewMap()
+	CopiedEdges := new(vector.Vector)
 	m.Edges.Do(func(l interface{}) {
 		e := l.(*Edge)
 		if e.start.Point.Less(e.end.Point) {
 			f,g := NewEdgePair(NewVertex(e.start.Copy()),NewVertex(e.end.Copy()))
-			o.Edges.Push(f)
-			o.Edges.Push(g)
+			f.face = e.face
+			g.face = e.twin.face
+			CopiedEdges.Push(f)
+			CopiedEdges.Push(g)
 		}
 	})
 	n.Edges.Do(func(l interface{}) {
 		e := l.(*Edge)
 		if e.start.Point.Less(e.end.Point) {
 			f,g := NewEdgePair(NewVertex(e.start.Copy()),NewVertex(e.end.Copy()))
-			o.Edges.Push(f)
-			o.Edges.Push(g)
+			f.face = e.face
+			g.face = e.twin.face
+			CopiedEdges.Push(f)
+			CopiedEdges.Push(g)
 		}
 	})
 
@@ -58,7 +63,7 @@ func (m *Map) Overlay(n * Map) (*Map,os.Error) {
 	T := new(sweepStatus)
 	T.segments = new(vector.Vector)
 
-	o.Edges.Do(func(l interface{}) {
+	CopiedEdges.Do(func(l interface{}) {
 		e,_ := l.(*Edge)
 		if e.start.Point.Less(e.end.Point) {
 			evt := new(sweepEvent)
@@ -93,6 +98,8 @@ func (m *Map) Overlay(n * Map) (*Map,os.Error) {
 		sort.Sort(Lswp)
 		for i := 0; i < L.Len()-1;  {
 			if L.At(i).(*Edge).Equal(L.At(i+1).(*Edge)) {
+				L.At(i).(*Edge).newFace = L.At(i+1).(*Edge).face
+				L.At(i).(*Edge).twin.newFace = L.At(i+1).(*Edge).twin.face
 				L.Delete(i+1)
 			} else {
 				i++
@@ -166,6 +173,8 @@ func (m *Map) Overlay(n * Map) (*Map,os.Error) {
 
 		R.Do(func(r interface{}) {
 			L.Push(r.(*Edge).twin)
+			o.Edges.Push(r)
+			o.Edges.Push(r.(*Edge).twin)
 		})
 		nv := NewVertex(evt.point.Copy())
 		nv.outgoingEdges = L
@@ -175,7 +184,35 @@ func (m *Map) Overlay(n * Map) (*Map,os.Error) {
 		})
 		sort.Sort(nv.outgoingEdges)
 		o.Verticies.Push(nv)
+
+		for i:=0; i < nv.outgoingEdges.Len(); i++ {
+			e,_ := nv.outgoingEdges.At(i).(*Edge)
+			f,_ := nv.outgoingEdges.At((i+1) % nv.outgoingEdges.Len()).(*Edge)
+			e.prev = f.twin
+			f.twin.next = e
+		}
+		
+
 	}
+
+	o.Edges.Do(func (l interface{}) {
+		e,_ := l.(*Edge)
+		if e.visited { return }
+		//fmt.Fprintf(os.Stderr,"found a face containing: %v,",e.start)
+
+		F := new(Face)
+		F.boundary = e
+		e.face = F
+		e.visited = true
+
+		for f:= e.Next(); f != e; f = f.Next() {
+			//fmt.Fprintf(os.Stderr,"%v,",f.start)
+			f.visited = true
+			f.face = F
+		}
+		//os.Stderr.WriteString("\n")
+		o.Faces.Push(F)
+	})
 
 	return o,nil
 }

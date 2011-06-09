@@ -11,6 +11,7 @@ type Vertex struct {
 	*Point
 	outgoingEdges *vector.Vector
 	copy *Vertex //used only in the copy routine
+	inFace *Face
 }
 
 func NewVertex(p *Point) (* Vertex) {
@@ -36,6 +37,7 @@ type Edge struct {
 	next,prev,twin *Edge
 	face *Face
 	newFace *Face
+	visited bool
 }
 
 func (e * Edge) Coterminal(f * Edge) bool {
