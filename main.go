@@ -9,6 +9,10 @@ import "math"
 import "./quadratic/quadratic"
 import "./zellij"
 
+func init() {
+	ZellijTilings,reset = zellij.TileRegion(new(quadratic.Integer),quadratic.NewInteger(40,0),new(quadratic.Integer),quadratic.NewInteger(40,0))
+}
+
 var ZellijTilings <-chan *quadratic.Map
 var reset chan<- int
 
@@ -35,8 +39,8 @@ func RenderTiles(w http.ResponseWriter, req *http.Request) {
 	
 	t := <-ZellijTilings
 
-	/*t := zellij.PathMap("tspjgbc")
-	u := zellij.PathMap("tspjg").Translate(quadratic.NewVertex(zellij.Points["j"]),quadratic.NewVertex(zellij.Points["p"]))
+	/*t := zellij.TileMap(zellij.Tiles[0])
+	u := zellij.TileMap(zellij.Tiles[0]).Translate(quadratic.NewVertex(zellij.Points["b"]),quadratic.NewVertex(zellij.Points["e"]))
 	v,ok := t.Overlay(u)
 	if ok != nil {
 		os.Stderr.WriteString(ok.String()+"\n")
@@ -52,6 +56,8 @@ func RenderTiles(w http.ResponseWriter, req *http.Request) {
 	image.SetLineWidth(.1)
 	image.Translate(72*2.,72*2.)
 	image.Scale(4.,4.)
+	t.ColourFaces(image)
+	image.SetSourceRGBA(0.,0.,0.,1.)
 	t.DrawEdges(image)
 
 	image.Finish()

@@ -33,3 +33,17 @@ func (m *Map) DrawEdges(ctx *cairo.Surface) {
 		v.(*Vertex).Draw(ctx)
 	})
 }
+
+func (m *Map) ColourFaces(ctx *cairo.Surface)  {
+	m.Faces.Do(func (f interface{}) {
+		F,_ := f.(*Face)
+		e := F.boundary;
+		ctx.MoveTo(e.start.Float64())
+		for f:= e.Next(); f != e; f = f.Next() {
+			ctx.LineTo(f.start.Float64())
+		}
+		ctx.ClosePath()
+		ctx.SetSourceRGBA(1.,0.,0.,.1)
+		ctx.Fill()
+	})
+}	
