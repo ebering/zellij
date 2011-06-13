@@ -1,6 +1,7 @@
 package zellij
 
 import "./quadratic/quadratic"
+import "os"
 
 var Points map[string]*quadratic.Point
 var Tiles []string
@@ -69,6 +70,15 @@ func TileRegion(xmin,xmax,ymin,ymax *quadratic.Integer) (<-chan *quadratic.Map, 
 	return finalTilings,halt
 }
 
+func Overlay(f interface{}, g interface{}) (interface{},os.Error) {
+	if f.(string) == "inner" && g.(string) == "inner" {
+		return nil,os.NewError("cannot overlap zellij tiles")
+	} else if f.(string) == "inner" || g.(string) == "inner" {
+		return "inner",nil
+	}
+	return "outer",nil
+}
+
 func addTile(sink chan<- *quadratic.Map, T *quadratic.Map, t string) {
 	T.Verticies.Do(func (l interface{}) {
 		v := l.(*quadratic.Vertex)
@@ -76,7 +86,7 @@ func addTile(sink chan<- *quadratic.Map, T *quadratic.Map, t string) {
 		q.Verticies.Do(func (l interface{}) {
 			u := l.(*quadratic.Vertex)
 			if !v.Point.Equal(u.Point) {
-				Q,ok := T.Overlay(q.Copy().Translate(u,v))
+				Q,ok := T.Overlay(q.Copy().Translate(u,v),Overlay)
 				if ok == nil && !Q.Isomorphic(T) {
 					sink <- Q
 				} 
