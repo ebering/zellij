@@ -58,6 +58,15 @@ func MakeTranslation(from,to *Point) (func (*Point) (*Point)) {
 	}
 }
 
+func (p *Point) RotatePi4(n int) {
+	n = n % 8 + 8;
+
+	for i := 0; i < n; i++ {
+		p.x,p.y = p.x.multR2On2().sub(p.y.multR2On2()),
+			p.y.multR2On2().add(p.x.multR2On2())
+	}
+}
+
 func PointFromString(ptstr string)  (* Point,os.Error) {
 	re := regexp.MustCompile("(-?[0-9]+),(-?[0-9]+),(-?[0-9]+),(-?[0-9]+)")
 	matches := re.FindStringSubmatch(ptstr)

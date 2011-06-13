@@ -231,6 +231,12 @@ func (m *Map) Translate(from,to *Vertex) (*Map) {
 	return m
 }
 
+func (m *Map) RotatePi4(n int) {
+	m.Verticies.Do(func (v interface{}) {
+		v.(*Vertex).RotatePi4(n)
+	}
+}
+
 func (m *Map) AdjacencyMatrix() [][]bool {
 	mat := make([][]bool,m.Verticies.Len())
 	for i,_ := range(mat) {
