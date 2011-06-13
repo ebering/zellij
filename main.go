@@ -4,7 +4,6 @@ import "cairo"
 import "http"
 import "log"
 import "os"
-import "math"
 
 import "./quadratic/quadratic"
 import "./zellij"
@@ -18,7 +17,6 @@ var reset chan<- int
 
 func main() {
 	http.HandleFunc("/",MainScreen)
-	http.HandleFunc("/svg",RenderSVG)
 	http.HandleFunc("/start",StartTiling)
 	http.HandleFunc("/tiles",RenderTiles)
 	err := http.ListenAndServe(":8080",nil)
@@ -40,12 +38,12 @@ func RenderTiles(w http.ResponseWriter, req *http.Request) {
 	t := <-ZellijTilings
 
 	/*t := zellij.TileMap(zellij.Tiles[0])
-	u := zellij.TileMap(zellij.Tiles[0]).Translate(quadratic.NewVertex(zellij.Points["b"]),quadratic.NewVertex(zellij.Points["e"]))
-	v,ok := t.Overlay(u)
+	u := t.Copy().Translate(quadratic.NewVertex(zellij.Points["j"]),quadratic.NewVertex(zellij.Points["r"]))
+	v,ok := t.Overlay(u,zellij.Overlay)
 	if ok != nil {
 		os.Stderr.WriteString(ok.String()+"\n")
 	}
-	v,ok = u.Overlay(t)
+	v,ok = v.Overlay(t.Translate(quadratic.NewVertex(zellij.Points["s"]),quadratic.NewVertex(zellij.Points["e"])),zellij.Overlay)
 	if ok != nil {
 		os.Stderr.WriteString(ok.String()+"\n")
 	}
@@ -74,54 +72,3 @@ func StartTiling(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 	
-
-func RenderSVG(w http.ResponseWriter, req *http.Request) {
-	req.ParseForm()
-	polys := req.Form["polys"]
-
-	if len(polys) == 0 {
-		http.ServeFile(w,req,"svg/empty.svg")
-		return
-	}
-
-	e := os.Remove("svg/test-surface.svg")
-	if e != nil {
-		os.Stderr.WriteString(e.String())
-	}	
-
-	maps := make([]*quadratic.Map,len(polys))
-
-	for i:=0; i < len(polys); i++ {
-		m,ok := quadratic.PolygonMapFromString(polys[i])
-		if ok != nil {
-			http.ServeFile(w,req,"svg/empty.svg")
-			os.Stderr.WriteString("couldn't parse points\n")
-		}	
-		maps[i] = m
-	}
-
-	for i:=1; i < len(polys); i++ {
-		_,e := maps[0].Overlay(maps[i])
-		if e != nil {
-			os.Stderr.WriteString(e.String())
-		}
-	}
-
-	image := cairo.NewSurface("svg/test-surface.svg",72*4,72*4)
-	image.SetSourceRGB(0.,0.,0.)
-
-	maps[0].DrawEdges(image)
-	maps[1] = maps[0].Copy()
-	/*maps[1].Translate(quadratic.NewVertex(quadratic.NewPoint(new(quadratic.Integer),new(quadratic.Integer))),
-		quadratic.NewVertex(quadratic.NewPoint(new(quadratic.Integer),quadratic.NewInteger(100,0))))*/
-	image.SetSourceRGB(1.,0.,0.)
-	maps[1].DrawEdges(image)
-
-	image.Finish()
-	http.ServeFile(w,req,"svg/test-surface.svg")
-}
-
-func DrawCircle(ctx *cairo.Surface, x,y float64) {
-	ctx.Arc(x,y,1.,0.,2.*math.Pi)
-	ctx.Fill()
-}
