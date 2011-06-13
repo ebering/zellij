@@ -35,6 +35,8 @@ func (m *Map) DrawEdges(ctx *cairo.Surface) {
 }
 
 func (m *Map) ColourFaces(ctx *cairo.Surface)  {
+	n := float64(m.Faces.Len())
+	i := 0.
 	m.Faces.Do(func (f interface{}) {
 		F,_ := f.(*Face)
 		e := F.boundary;
@@ -43,7 +45,8 @@ func (m *Map) ColourFaces(ctx *cairo.Surface)  {
 			ctx.LineTo(f.start.Float64())
 		}
 		ctx.ClosePath()
-		ctx.SetSourceRGBA(1.,0.,0.,.1)
+		ctx.SetSourceRGBA(i/n,0.,0.,1.)
 		ctx.Fill()
+		i = i+1.
 	})
 }	
