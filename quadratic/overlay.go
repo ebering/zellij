@@ -35,7 +35,7 @@ func (s *sweepStatus) Swap(i,j int) {
 }
 	
 
-func (m *Map) Overlay(n * Map) (*Map,os.Error) {
+func (m *Map) Overlay(n * Map,mergeFaces func(interface{},interface{}) (interface{},os.Error)) (*Map,os.Error) {
 	o := NewMap()
 	CopiedEdges := new(vector.Vector)
 	m.Edges.Do(func(l interface{}) {
@@ -138,7 +138,7 @@ func (m *Map) Overlay(n * Map) (*Map,os.Error) {
 				cross,_,_ := sb.Line().IntersectAsFloats(sa.Line())
 				if cross && !sa.Coterminal(sb) {
 					return nil,os.NewError("intersection not at an endpoint")
-				}
+				} 
 			}
 		} else {
 			aboveL := sort.Search(T.Len(),func (i int) bool {
@@ -153,6 +153,8 @@ func (m *Map) Overlay(n * Map) (*Map,os.Error) {
 				cross,_,_ := sa.Line().IntersectAsFloats(sb.Line())
 				if cross && !sa.Coterminal(sb) {
 					return nil,os.NewError("intersection not at an endpoint")
+				} else if R.Len() == 0 {
+					sa.twin.newFace = sb.face
 				}
 			}
 			if aboveL < T.Len() {
@@ -162,9 +164,12 @@ func (m *Map) Overlay(n * Map) (*Map,os.Error) {
 				cross,_,_ := sa.Line().IntersectAsFloats(sb.Line())
 				if cross && !sa.Coterminal(sb) {
 					return nil,os.NewError("intersection not at an endpoint")
+				} else if R.Len() == 0 {
+					sa.twin.newFace = sb.face
 				}
 			}
 		}
+
 		L.Do(func(l interface{}) {
 			T.segments.Push(l)
 		})
@@ -186,33 +191,77 @@ func (m *Map) Overlay(n * Map) (*Map,os.Error) {
 		o.Verticies.Push(nv)
 
 		for i:=0; i < nv.outgoingEdges.Len(); i++ {
-			e,_ := nv.outgoingEdges.At(i).(*Edge)
-			f,_ := nv.outgoingEdges.At((i+1) % nv.outgoingEdges.Len()).(*Edge)
+			e := nv.outgoingEdges.At(i).(*Edge)
+			f := nv.outgoingEdges.At((i+1) % nv.outgoingEdges.Len()).(*Edge)
 			e.prev = f.twin
 			f.twin.next = e
 		}
-		
-
 	}
 
-	o.Edges.Do(func (l interface{}) {
-		e,_ := l.(*Edge)
-		if e.visited { return }
+	for i:=0; i < o.Edges.Len(); i++ {
+		e,_ := o.Edges.At(i).(*Edge)
+		if e.visited { continue }
 		//fmt.Fprintf(os.Stderr,"found a face containing: %v,",e.start)
 
 		F := new(Face)
 		F.boundary = e
-		e.face = F
+		F.fromMap = o
 		e.visited = true
+		oldFaces := make(map[*Face]int)
+		if e.face != nil {
+			oldFaces[e.face]++
+		}
+		if e.newFace != nil {
+			oldFaces[e.newFace]++
+		}
+		if e.face == nil && e.newFace == nil {
+			panic("the edge without a face\n")
+		}
+		e.face = F
 
 		for f:= e.Next(); f != e; f = f.Next() {
 			//fmt.Fprintf(os.Stderr,"%v,",f.start)
 			f.visited = true
+			if f.face != nil {
+				oldFaces[f.face]++
+			}
+			if f.newFace != nil {
+				oldFaces[f.newFace]++
+			}
 			f.face = F
 		}
 		//os.Stderr.WriteString("\n")
+
+		if len(oldFaces) > 2 {
+			os.Stderr.WriteString(fmt.Sprintf("%v faces overlapping a new face, input must have been malformed\n",len(oldFaces)))
+		} else if len(oldFaces) == 0 {
+			panic(fmt.Sprintf("No old faces. e: %v, e.face: %+v, maps: m: %p n: %p o: %p\n",e,e.face,m,n,o))
+		}
+
+		var mFace,nFace *Face
+		for f,_ := range(oldFaces) {
+			if f.fromMap == m {
+				mFace = f
+			} else {
+				nFace = f
+			}
+		}
+		if mFace != nil && nFace != nil {
+			v,ok := mergeFaces(mFace.Value,nFace.Value)
+			if ok !=nil {
+				return nil,ok
+			}
+			F.Value = v
+		} else if mFace != nil {
+			F.Value = mFace.Value
+		} else if nFace != nil {
+			F.Value = nFace.Value
+		} else {
+			panic(fmt.Sprintf("face didn't come from an mFace or an nFace, pointers m: %v n: %v o: %v face: %v",m,n,o,e.face))
+		}
+
 		o.Faces.Push(F)
-	})
+	}
 
 	return o,nil
 }

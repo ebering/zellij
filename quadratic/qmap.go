@@ -11,7 +11,6 @@ type Vertex struct {
 	*Point
 	outgoingEdges *vector.Vector
 	copy *Vertex //used only in the copy routine
-	inFace *Face
 }
 
 func NewVertex(p *Point) (* Vertex) {
@@ -38,6 +37,7 @@ type Edge struct {
 	face *Face
 	newFace *Face
 	visited bool
+	copy *Edge //used only in the copy routine
 }
 
 func (e * Edge) Coterminal(f * Edge) bool {
@@ -75,7 +75,9 @@ func (e * Edge) Parallel(f * Edge) (bool) {
 // Represents a face
 type Face struct {
 	boundary *Edge
+	fromMap *Map
 	Value interface{}
+	copy *Face
 }
 
 // Represents a planar map
@@ -96,11 +98,13 @@ func NewEdgePair(start,end *Vertex) (*Edge,*Edge) {
 	e,f := new(Edge),new(Edge)
 	e.start,e.end = start,end
 	f.start,f.end = e.end,e.start
+	
+	e.twin,f.twin = f,e
 
 	if start.outgoingEdges.Len() == 0 {
 		start.outgoingEdges.Push(e)
-		start.outgoingEdges.Push(f)
-		sort.Sort(start.outgoingEdges)
+		e.prev = f
+		f.next = e
 	} else {
 		i := start.EdgeIndexCounterClockwiseOf(e)
 		n := start.outgoingEdges.Len()
@@ -108,11 +112,13 @@ func NewEdgePair(start,end *Vertex) (*Edge,*Edge) {
 		f.next = start.outgoingEdges.At( (i-1+n) % n ).(*Edge)
 		start.outgoingEdges.Insert(i,e)
 	}
+	f.next.prev = f
+	e.prev.next = e	
 
 	if end.outgoingEdges.Len() == 0 {
-		end.outgoingEdges.Push(e)
 		end.outgoingEdges.Push(f)
-		sort.Sort(end.outgoingEdges)
+		e.next = f
+		f.prev = e
 	} else {
 		i := end.EdgeIndexCounterClockwiseOf(f)
 		n := end.outgoingEdges.Len()
@@ -120,8 +126,8 @@ func NewEdgePair(start,end *Vertex) (*Edge,*Edge) {
 		e.next = end.outgoingEdges.At( (i-1+n) %n ).(*Edge)
 		end.outgoingEdges.Insert(i,f)
 	}
-	
-	e.twin,f.twin = f,e
+	f.prev.next = f
+	e.next.prev = e
 
 	return e,f
 }
@@ -189,7 +195,29 @@ func (m *Map) Copy() (* Map) {
 	m.Edges.Do(func (f interface{}) {
 		e := f.(*Edge)
 		if e.start.Point.Less(e.end.Point) {
-			c.JoinVerticies(e.start.copy,e.end.copy)
+			e.copy = c.JoinVerticies(e.start.copy,e.end.copy)
+			e.twin.copy = e.copy.twin
+		}
+	})
+	m.Faces.Do(func (f interface{}) {
+		F := f.(*Face)
+		G := new(Face)
+		G.fromMap = c
+		G.Value = F.Value
+		G.boundary = F.boundary.copy
+		F.copy = G
+		c.Faces.Push(G)
+	})
+	c.Faces.Do(func (f interface{}) {
+		F := f.(*Face)
+		for e := F.boundary.Next(); e != F.boundary; e = e.Next() {
+			e.face = F
+		}
+		F.boundary.face = F
+	})
+	c.Edges.Do(func (f interface{}) {
+		if f.(*Edge).face == nil {
+			panic("map copy horrific failure")
 		}
 	})
 	return c

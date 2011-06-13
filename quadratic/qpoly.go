@@ -10,24 +10,28 @@ func PolygonMap(verts [] *Point) (* Map) {
 		m.Verticies.Push(v)
 	}
 	innerFace := new(Face)
+	innerFace.fromMap = m
 	innerFace.Value = "inner"
 	outerFace := new(Face)
+	outerFace.fromMap = m
 	outerFace.Value = "outer"
 	for i := 0; i < m.Verticies.Len(); i++ {
 		if(i == m.Verticies.Len()-1) {
 			f := m.JoinVerticies(m.Verticies.Last().(*Vertex),m.Verticies.At(0).(*Vertex))
-			f.face = innerFace
-			innerFace.boundary = f
-			f.twin.face = outerFace
+			f.face = outerFace
 			outerFace.boundary = f
+			f.twin.face = innerFace
+			innerFace.boundary = f.twin
 			break
 		} 
 		e := m.JoinVerticies(m.Verticies.At(i).(*Vertex),m.Verticies.At(i+1).(*Vertex))
-		e.face = innerFace
-		innerFace.boundary = e
-		e.twin.face = outerFace
+		e.face = outerFace
 		outerFace.boundary = e
+		e.twin.face = innerFace
+		innerFace.boundary = e.twin
 	}
+	m.Faces.Push(innerFace)
+	m.Faces.Push(outerFace)
 	return m
 }
 
@@ -38,8 +42,10 @@ func PathMap(verts [] *Point) (* Map) {
 		m.Verticies.Push(v)
 	}
 	innerFace := new(Face)
+	innerFace.fromMap = m
 	innerFace.Value = "inner"
 	outerFace := new(Face)
+	outerFace.fromMap = m
 	outerFace.Value = "outer"
 	for i := 0; i < m.Verticies.Len()-1; i++ {
 		e := m.JoinVerticies(m.Verticies.At(i).(*Vertex),m.Verticies.At(i+1).(*Vertex))
