@@ -11,6 +11,7 @@ type Vertex struct {
 	*Point
 	outgoingEdges *vector.Vector
 	copy *Vertex //used only in the copy routine
+	inFace *Face
 }
 
 func NewVertex(p *Point) (* Vertex) {
@@ -70,24 +71,27 @@ func (e * Edge) Heading() float64 {
 func (e * Edge) IntHeading() int {
 	dx := e.end.X().Sub(e.start.X())
 	dy := e.end.Y().Sub(e.start.Y())
+	negeq := dx.Add(dy).Equal(Zero)
+	eq := dx.Sub(dy).Equal(Zero)
 	switch {
 		case dy.Equal(Zero) && Zero.Less(dx):
 			return 0
-		case dx.Equal(dy) && Zero.Less(dy) && Zero.Less(dx):
+		case eq && Zero.Less(dy) && Zero.Less(dx):
 			return 1
 		case dx.Equal(Zero) && Zero.Less(dy):
 			return 2
-		case dx.Equal(dy) && Zero.Less(dy) && dx.Less(Zero):
+		case negeq && Zero.Less(dy) && dx.Less(Zero):
 			return 3
 		case dy.Equal(Zero) && dx.Less(Zero):
 			return 4
-		case dx.Equal(dy) && dy.Less(Zero) && dx.Less(Zero):
+		case eq && dy.Less(Zero) && dx.Less(Zero):
 			return 5
 		case dx.Equal(Zero) && dy.Less(Zero):
 			return 6
-		case dx.Equal(dy) && dy.Less(Zero) && Zero.Less(dx):
+		case negeq && dy.Less(Zero) && Zero.Less(dx):
 			return 7
 	}
+	panic("no heading")
 	return 0
 }
 
