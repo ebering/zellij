@@ -16,6 +16,8 @@ func NewInteger(a,b int64) (* Integer) {
 
 const BASE = 2
 
+var Zero = &Integer{0,0}
+
 func (i * Integer) Add(j * Integer) (* Integer){
 	return &Integer{i.a+j.a,i.b+j.b}
 }
@@ -26,6 +28,10 @@ func (i * Integer) Sub(j * Integer) (* Integer) {
 
 func (i * Integer) Mul(j * Integer) (* Integer) {
 	return &Integer{ i.a*j.a+2*i.b*j.b,i.a*j.b+i.b*j.a}
+}
+
+func (i *Integer) MultR2On2() (* Integer) {
+	return &Integer{i.b,i.a/2}
 }
 
 func (i * Integer) Div(j * Integer) (* Integer,bool) {

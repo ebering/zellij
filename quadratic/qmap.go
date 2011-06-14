@@ -40,6 +40,14 @@ type Edge struct {
 	copy *Edge //used only in the copy routine
 }
 
+func (e * Edge) Start() (* Vertex) {
+	return e.start
+}
+
+func (e * Edge) End() (* Vertex) {
+	return e.end
+}
+
 func (e * Edge) Coterminal(f * Edge) bool {
 	return e.start.Point.Equal(f.start.Point) ||
 		e.start.Point.Equal(f.end.Point) ||
@@ -57,6 +65,30 @@ func (e * Edge) Line() (*Line){
 
 func (e * Edge) Heading() float64 {
 	return math.Atan2(e.end.y.Sub(e.start.y).Float64(),e.end.x.Sub(e.start.x).Float64()) 
+}
+
+func (e * Edge) IntHeading() int {
+	dx := e.end.X().Sub(e.start.X())
+	dy := e.end.Y().Sub(e.start.Y())
+	switch {
+		case dy.Equal(Zero) && Zero.Less(dx):
+			return 0
+		case dx.Equal(dy) && Zero.Less(dy) && Zero.Less(dx):
+			return 1
+		case dx.Equal(Zero) && Zero.Less(dy):
+			return 2
+		case dx.Equal(dy) && Zero.Less(dy) && dx.Less(Zero):
+			return 3
+		case dy.Equal(Zero) && dx.Less(Zero):
+			return 4
+		case dx.Equal(dy) && dy.Less(Zero) && dx.Less(Zero):
+			return 5
+		case dx.Equal(Zero) && dy.Less(Zero):
+			return 6
+		case dx.Equal(dy) && dy.Less(Zero) && Zero.Less(dx):
+			return 7
+	}
+	return 0
 }
 
 func (e * Edge) Less(v interface{}) bool {
@@ -231,10 +263,11 @@ func (m *Map) Translate(from,to *Vertex) (*Map) {
 	return m
 }
 
-func (m *Map) RotatePi4(n int) {
+func (m *Map) RotatePi4(n int) (*Map){
 	m.Verticies.Do(func (v interface{}) {
 		v.(*Vertex).RotatePi4(n)
-	}
+	})
+	return m
 }
 
 func (m *Map) AdjacencyMatrix() [][]bool {

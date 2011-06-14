@@ -62,8 +62,8 @@ func (p *Point) RotatePi4(n int) {
 	n = n % 8 + 8;
 
 	for i := 0; i < n; i++ {
-		p.x,p.y = p.x.multR2On2().sub(p.y.multR2On2()),
-			p.y.multR2On2().add(p.x.multR2On2())
+		p.x,p.y = p.x.MultR2On2().Sub(p.y.MultR2On2()),
+			p.y.MultR2On2().Add(p.x.MultR2On2())
 	}
 }
 
@@ -82,4 +82,12 @@ func PointFromString(ptstr string)  (* Point,os.Error) {
 	}
 	return &Point{&Integer{x,x2},&Integer{y,y2}},nil
 }
+
+func PointMustFromString(ptstr string) (* Point) {
+	pt,ok := PointFromString(ptstr)
+	if ok != nil {
+		panic("PointMustFromString: error in point string: "+ok.String())
+	}
+	return pt
+}	
 
