@@ -9,7 +9,7 @@ import "./quadratic/quadratic"
 import "./zellij"
 
 func init() {
-	ZellijTilings,reset = zellij.TileRegion(new(quadratic.Integer),quadratic.NewInteger(40,0),new(quadratic.Integer),quadratic.NewInteger(40,0))
+	//ZellijTilings,reset = zellij.TileRegion(quadratic.NewInteger(-40,0),quadratic.NewInteger(40,0),quadratic.NewInteger(-40,0),quadratic.NewInteger(40,0))
 }
 
 var ZellijTilings <-chan *quadratic.Map
@@ -35,19 +35,20 @@ func RenderTiles(w http.ResponseWriter, req *http.Request) {
 		os.Stderr.WriteString(e.String()+"\n")
 	}	
 	
-	t := <-ZellijTilings
+	//t := <-ZellijTilings
 
-	/*t := zellij.TileMap(zellij.Tiles[0])
-	u := t.Copy().Translate(quadratic.NewVertex(zellij.Points["j"]),quadratic.NewVertex(zellij.Points["r"]))
+	t := zellij.TileMap(zellij.Tiles[0])
+	u := zellij.TileMap(zellij.Tiles[5]).Translate(quadratic.NewVertex(zellij.Points["e"]),quadratic.NewVertex(zellij.Points["g"]))
+	
 	v,ok := t.Overlay(u,zellij.Overlay)
 	if ok != nil {
 		os.Stderr.WriteString(ok.String()+"\n")
 	}
-	v,ok = v.Overlay(t.Translate(quadratic.NewVertex(zellij.Points["s"]),quadratic.NewVertex(zellij.Points["e"])),zellij.Overlay)
+	/*v,ok = v.Overlay(t.Translate(quadratic.NewVertex(zellij.Points["s"]),quadratic.NewVertex(zellij.Points["e"])),zellij.Overlay)
 	if ok != nil {
 		os.Stderr.WriteString(ok.String()+"\n")
-	}
-	t = v*/
+	}*/
+	t = v
 	
 	image := cairo.NewSurface("svg/test-surface.svg",72*4,72*4)
 	image.SetSourceRGB(0.,0.,0.)
