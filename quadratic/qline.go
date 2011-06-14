@@ -91,9 +91,10 @@ func (l *Line) LessAt(m *Line,p *Point) bool {
 	// General case:
 	// derived from l(p.x) <? m(p.x) but compensates for possible non-invertibility
 	// of deltax
-	lhs := m.deltax.Mul(l.deltay.Mul(p.x.Sub(l.start.x))).Add(l.start.y)
-	rhs := l.deltax.Mul(m.deltay.Mul(p.x.Sub(m.start.x))).Add(m.start.y)
+	lhs := m.deltax.Mul(l.deltay.Mul(p.x.Sub(l.start.x)).Add(l.start.y.Mul(l.deltax)))
+	rhs := l.deltax.Mul(m.deltay.Mul(p.x.Sub(m.start.x)).Add(m.start.y.Mul(m.deltax)))
 	//fmt.Fprintf(os.Stderr," by general case: %v\n",lhs.Less(rhs))
+	//fmt.Fprintf(os.Stderr,"lhs: %v rhs: %v\n",lhs,rhs)
 	return lhs.Less(rhs)
 }
 
