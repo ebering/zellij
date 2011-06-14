@@ -5,6 +5,7 @@ import "os"
 
 var Points map[string]*quadratic.Point
 var Tiles []string
+var gRs chan int
 
 func init() {
 	Points = make(map[string]*quadratic.Point)
@@ -32,9 +33,20 @@ func init() {
 	Points["v"], _ = quadratic.PointFromString("2,0,-2,0")
 	Points["w"], _ = quadratic.PointFromString("0,0,0,-2")
 
-	Tiles = make([]string, 2)
+
+
+	Points["A"], _ = quadratic.PointFromString("-2,-2,2,0")
+	Points["B"], _ = quadratic.PointFromString("2,2,2,0")
+	Points["C"], _ = quadratic.PointFromString("-2,-2,-2,0")
+	Points["D"], _ = quadratic.PointFromString("2,2,-2,0")
+
+	Tiles = make([]string,6 )
 	Tiles[0] = "adehnrvuwtspjgbc"
 	Tiles[1] = "beovsi"
+	Tiles[2] = "Abgj"
+	Tiles[3] = "Cjps"
+	Tiles[4] = "Dvrn"
+	Tiles[5] = "Bnhe"
 }
 
 func TileMap(s string) *quadratic.Map {
@@ -54,22 +66,38 @@ func PathMap(s string) *quadratic.Map {
 
 func TileRegion(xmin,xmax,ymin,ymax *quadratic.Integer) (<-chan *quadratic.Map, chan<- int) {
 	//center := quadratic.NewPoint(xmax.Sub(xmin),ymax.Sub(ymin))
-	intermediateTilings := make(chan *quadratic.Map,1000)
-	finalTilings := make(chan *quadratic.Map,100)
+	intermediateTilings := make(chan *quadratic.Map,100)
+	finalTilings := make(chan *quadratic.Map,10)
 	halt := make(chan int)
+	gRs = make(chan int,1)
+	bc := BoundsChecker(xmin,xmax,ymin,ymax)
 	intermediateTilings <- TileMap(Tiles[0])
 	go func () {
 		for {
 			T := <-intermediateTilings
-			for _,t := range(Tiles) {
-				go addTile(intermediateTilings,T,t)
+			if !bc(T) {
+				panic("what")
 			}
+			for _,t := range(Tiles) {
+				go addTileByEdge(intermediateTilings,finalTilings,bc,T,t)
+			} 
 			finalTilings <- T
 		}
 	}()
 	return finalTilings,halt
 }
 
+func BoundsChecker(xmin,xmax,ymin,ymax *quadratic.Integer) (func (*quadratic.Map) bool) {
+	return func (m *quadratic.Map) bool {
+		ret := true
+		m.Verticies.Do(func (l interface{}) {
+			v := l.(*quadratic.Vertex)
+			ret = ret && xmin.Less(v.X()) && v.X().Less(xmax) && ymin.Less(v.Y()) && v.Y().Less(ymax)
+		})
+		return ret
+	}
+}
+	
 func Overlay(f interface{}, g interface{}) (interface{},os.Error) {
 	if f.(string) == "inner" && g.(string) == "inner" {
 		return nil,os.NewError("cannot overlap zellij tiles")
@@ -79,7 +107,25 @@ func Overlay(f interface{}, g interface{}) (interface{},os.Error) {
 	return "outer",nil
 }
 
-func addTile(sink chan<- *quadratic.Map, T *quadratic.Map, t string) {
+func addTileByEdge(sink chan<- *quadratic.Map, finalSink chan<- *quadratic.Map, boundsCheck func(*quadratic.Map) bool, T *quadratic.Map, t string) {
+	T.Edges.Do(func (l interface {}) {
+		e := l.(*quadratic.Edge)
+		q := TileMap(t)
+		q.Edges.Do(func (l interface{}) {
+			f := l.(*quadratic.Edge)
+			if e.IntHeading() == f.IntHeading() && !e.Start().Point.Equal(f.Start().Point) && e.Start().Less(e.End()) {
+				//os.Stderr.WriteString("boundary\n")
+				Q,ok := T.Overlay(q.Copy().Translate(f.Start(),e.Start()),Overlay)
+				if ok == nil && !Q.Isomorphic(T) && boundsCheck(Q) {
+					//os.Stderr.WriteString("accept\n")
+					sink <- Q
+				} 
+			}
+		})
+	})
+}
+
+func addTileByVertex(sink chan<- *quadratic.Map, T *quadratic.Map, t string) {
 	T.Verticies.Do(func (l interface{}) {
 		v := l.(*quadratic.Vertex)
 		q := TileMap(t)
