@@ -67,7 +67,7 @@ func PathMap(s string) *quadratic.Map {
 func TileRegion(xmin,xmax,ymin,ymax *quadratic.Integer) (<-chan *quadratic.Map, chan<- int) {
 	//center := quadratic.NewPoint(xmax.Sub(xmin),ymax.Sub(ymin))
 	intermediateTilings := make(chan *quadratic.Map,100)
-	finalTilings := make(chan *quadratic.Map,10)
+	finalTilings := make(chan *quadratic.Map)
 	halt := make(chan int)
 	gRs = make(chan int,1)
 	bc := BoundsChecker(xmin,xmax,ymin,ymax)
@@ -75,9 +75,6 @@ func TileRegion(xmin,xmax,ymin,ymax *quadratic.Integer) (<-chan *quadratic.Map, 
 	go func () {
 		for {
 			T := <-intermediateTilings
-			if !bc(T) {
-				panic("what")
-			}
 			for _,t := range(Tiles) {
 				go addTileByEdge(intermediateTilings,finalTilings,bc,T,t)
 			} 
