@@ -81,7 +81,7 @@ func (m *Map) Overlay(n * Map,mergeFaces func(interface{},interface{}) (interfac
 	
 	for Q.Len() > 0 {
 		evt,_ := heap.Pop(Q).(*sweepEvent)
-		//fmt.Fprintf(os.Stderr,"event: %v\n",evt.point)
+		fmt.Fprintf(os.Stderr,"event: %v\n",evt.point)
 		L := new(vector.Vector)
 		Lswp := new(sweepStatus)
 		Lswp.segments = L
@@ -105,7 +105,7 @@ func (m *Map) Overlay(n * Map,mergeFaces func(interface{},interface{}) (interfac
 				i++
 			}
 		}
-		//fmt.Fprintf(os.Stderr,"L: %v\n",L)
+		fmt.Fprintf(os.Stderr,"L: %v\n",L)
 		R := new(vector.Vector)
 		for i:=0; i < T.segments.Len(); {
 			e := T.segments.At(i).(*Edge)
@@ -123,7 +123,7 @@ func (m *Map) Overlay(n * Map,mergeFaces func(interface{},interface{}) (interfac
 		// Most of the time you just abort with non-terminal intersection
 		T.sweepLocation = evt.point
 		sort.Sort(T)
-		//fmt.Fprintf(os.Stderr,"status: %v\n",T.segments)
+		fmt.Fprintf(os.Stderr,"status: %v\n",T.segments)
 		if L.Len() == 0 && R.Len() == 0 {
 			return nil,os.NewError("event point with no edges terminal at it "+evt.point.String()+fmt.Sprintf("current status: %v",T.segments))
 		} else if L.Len() == 0 {
@@ -153,7 +153,8 @@ func (m *Map) Overlay(n * Map,mergeFaces func(interface{},interface{}) (interfac
 				cross,_,_ := sa.Line().IntersectAsFloats(sb.Line())
 				if cross && !sa.Coterminal(sb) {
 					return nil,os.NewError("intersection not at an endpoint")
-				} else if R.Len() == 0 {
+				} else if R.Len() == 0  {
+					fmt.Fprintf(os.Stderr,"Lowest edge: %v above sweepline at: %v, doing faces, face values: sa.twin.face %v sb.face %v\n",sa,sb,sa.twin.face.Value,sb.face.Value)
 					sa.twin.newFace = sb.face
 				}
 			}
@@ -164,9 +165,10 @@ func (m *Map) Overlay(n * Map,mergeFaces func(interface{},interface{}) (interfac
 				cross,_,_ := sa.Line().IntersectAsFloats(sb.Line())
 				if cross && !sa.Coterminal(sb) {
 					return nil,os.NewError("intersection not at an endpoint")
-				} else if R.Len() == 0 {
-					sa.twin.newFace = sb.face
-				}
+				} else if R.Len() == 0 && !sb.Line().Vertical() {
+					fmt.Fprintf(os.Stderr,"Highest edge: %v below sweepline at: %v, doing faces, face values: sb.face %v sa.twin.face %v\n",sb,sa,sb.face.Value,sa.twin.face.Value)
+					sb.newFace = sa.twin.face
+				} 
 			}
 		}
 
@@ -198,6 +200,7 @@ func (m *Map) Overlay(n * Map,mergeFaces func(interface{},interface{}) (interfac
 		}
 	}
 
+	var leFuck string
 	for i:=0; i < o.Edges.Len(); i++ {
 		e,_ := o.Edges.At(i).(*Edge)
 		if e.visited { continue }
@@ -220,23 +223,31 @@ func (m *Map) Overlay(n * Map,mergeFaces func(interface{},interface{}) (interfac
 		e.face = F
 
 		for f:= e.Next(); f != e; f = f.Next() {
-			//fmt.Fprintf(os.Stderr,"%v,",f.start)
+			fmt.Fprintf(os.Stderr,"%v: ",f.start)
 			f.visited = true
 			if f.face != nil {
+				fmt.Fprintf(os.Stderr,"%v ",f.face.Value)
 				oldFaces[f.face]++
 			}
 			if f.newFace != nil {
+				fmt.Fprintf(os.Stderr,"%v ",f.newFace.Value)
 				oldFaces[f.newFace]++
 			}
+			fmt.Fprintf(os.Stderr,",")
 			f.face = F
 		}
-		//os.Stderr.WriteString("\n")
+		os.Stderr.WriteString("\n")
 
 		if len(oldFaces) > 2 {
-			os.Stderr.WriteString(fmt.Sprintf("%v faces overlapping a new face, input must have been malformed\n",len(oldFaces)))
+			leFuck += fmt.Sprintf("%v faces overlapping a new face, input must have been malformed, maps m: %p n: %p\n",len(oldFaces),m,n)
+			for f,_ := range(oldFaces) {
+				leFuck = leFuck + fmt.Sprintf("face %p from: %p containing: %v\n",f,f.fromMap,f.Value)
+			}
+			os.Stderr.WriteString(leFuck)
 		} else if len(oldFaces) == 0 {
 			panic(fmt.Sprintf("No old faces. e: %v, e.face: %+v, maps: m: %p n: %p o: %p\n",e,e.face,m,n,o))
 		}
+		fmt.Fprintf(os.Stderr,"%v old faces\n",len(oldFaces))
 
 		var mFace,nFace *Face
 		for f,_ := range(oldFaces) {
@@ -248,6 +259,7 @@ func (m *Map) Overlay(n * Map,mergeFaces func(interface{},interface{}) (interfac
 		}
 		if mFace != nil && nFace != nil {
 			v,ok := mergeFaces(mFace.Value,nFace.Value)
+			fmt.Fprintf(os.Stderr,"m face and n face\n")
 			if ok !=nil {
 				return nil,ok
 			}
@@ -261,6 +273,10 @@ func (m *Map) Overlay(n * Map,mergeFaces func(interface{},interface{}) (interfac
 		}
 
 		o.Faces.Push(F)
+	}
+	
+	if(leFuck != "") {
+		return o,os.NewError(leFuck)
 	}
 
 	return o,nil
