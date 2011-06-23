@@ -44,6 +44,8 @@ func (m *Map) Overlay(n * Map,mergeFaces func(interface{},interface{}) (interfac
 			f,g := NewEdgePair(NewVertex(e.start.Copy()),NewVertex(e.end.Copy()))
 			f.face = e.face
 			g.face = e.twin.face
+			f.Generation = e.Generation
+			g.Generation = e.twin.Generation
 			CopiedEdges.Push(f)
 			CopiedEdges.Push(g)
 		}
@@ -54,6 +56,8 @@ func (m *Map) Overlay(n * Map,mergeFaces func(interface{},interface{}) (interfac
 			f,g := NewEdgePair(NewVertex(e.start.Copy()),NewVertex(e.end.Copy()))
 			f.face = e.face
 			g.face = e.twin.face
+			f.Generation = e.Generation
+			g.Generation = e.twin.Generation
 			CopiedEdges.Push(f)
 			CopiedEdges.Push(g)
 		}

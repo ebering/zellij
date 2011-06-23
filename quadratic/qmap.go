@@ -38,6 +38,7 @@ type Edge struct {
 	face *Face
 	newFace *Face
 	visited bool
+	Generation int
 	copy *Edge //used only in the copy routine
 }
 
@@ -233,6 +234,7 @@ func (m *Map) Copy() (* Map) {
 		if e.start.Point.Less(e.end.Point) {
 			e.copy = c.JoinVerticies(e.start.copy,e.end.copy)
 			e.twin.copy = e.copy.twin
+			e.copy.Generation = e.Generation
 		}
 	})
 	m.Faces.Do(func (f interface{}) {
