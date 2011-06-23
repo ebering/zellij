@@ -25,11 +25,13 @@ func (l *Line) Draw(ctx *cairo.Surface) {
 func (m *Map) DrawEdges(ctx *cairo.Surface) {
 	m.Edges.Do(func (f interface{} ) {
 		e,_ := f.(*Edge)
-		if e.start.Less(e.end) {
+		if e.start.Less(e.end) && (e.face.Value.(string) == "outer" || e.twin.face.Value.(string) == "outer"){
+			ctx.SetSourceRGBA(0.,1.-1./(1.+float64(e.Generation)),0.,1.)
 			e.Line().Draw(ctx)
 		}
 	})
 	m.Verticies.Do(func (v interface{}) {
+		ctx.SetSourceRGBA(0.,0.,0.,1.)
 		v.(*Vertex).Draw(ctx)
 	})
 }

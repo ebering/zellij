@@ -6,7 +6,7 @@ import "log"
 import "os"
 
 import "./quadratic/quadratic"
-import "./zellij"
+import "./zellij/zellij"
 
 func init() {
 	ZellijTilings,reset = zellij.TileRegion(quadratic.NewInteger(-40,0),quadratic.NewInteger(40,0),quadratic.NewInteger(-40,0),quadratic.NewInteger(40,0))
@@ -38,10 +38,7 @@ func RenderTiles(w http.ResponseWriter, req *http.Request) {
 	t := <-ZellijTilings
 
 	/*t := zellij.TileMap(zellij.Tiles[0])
-	t.Edges.Do(func (f interface{}) {
-		fmt.Fprintf(os.Stderr,"%v heading: %v\n",f,f.(*quadratic.Edge).IntHeading())
-	})
-	/*u := zellij.TileMap(zellij.Tiles[0]).Translate(quadratic.NewVertex(zellij.Points["s"]),quadratic.NewVertex(zellij.Points["h"]))
+	u := zellij.TileMap(zellij.Tiles[5])
 	
 	v,ok := t.Overlay(u,zellij.Overlay)
 	if ok != nil {

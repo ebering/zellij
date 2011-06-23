@@ -9,21 +9,21 @@ import "math"
 // DON'T COCK THAT UP.
 type Vertex struct {
 	*Point
-	outgoingEdges *vector.Vector
+	OutgoingEdges *vector.Vector
 	copy *Vertex //used only in the copy routine
 	inFace *Face
 }
 
 func NewVertex(p *Point) (* Vertex) {
 	nv := new(Vertex)
-	nv.outgoingEdges = new(vector.Vector)
+	nv.OutgoingEdges = new(vector.Vector)
 	nv.Point = p.Copy()
 	return nv
 }
 
 func (v * Vertex) EdgeIndexCounterClockwiseOf(e *Edge) int {
-	return sort.Search(v.outgoingEdges.Len(), func (i int) bool {
-		return e.Less(v.outgoingEdges.At(i))
+	return sort.Search(v.OutgoingEdges.Len(), func (i int) bool {
+		return e.Less(v.OutgoingEdges.At(i))
 	})
 }
 
@@ -117,6 +117,12 @@ type Face struct {
 	copy *Face
 }
 
+func (f * Face) DoEdges(D func (*Edge) ()) {
+	for l := f.boundary.next; l != f.boundary; l = l.next {
+		D(l)
+	}
+}
+
 // Represents a planar map
 type Map struct {
 	Verticies, Edges, Faces *vector.Vector
@@ -138,30 +144,30 @@ func NewEdgePair(start,end *Vertex) (*Edge,*Edge) {
 	
 	e.twin,f.twin = f,e
 
-	if start.outgoingEdges.Len() == 0 {
-		start.outgoingEdges.Push(e)
+	if start.OutgoingEdges.Len() == 0 {
+		start.OutgoingEdges.Push(e)
 		e.prev = f
 		f.next = e
 	} else {
 		i := start.EdgeIndexCounterClockwiseOf(e)
-		n := start.outgoingEdges.Len()
-		e.prev = start.outgoingEdges.At(i %n ).(*Edge).twin
-		f.next = start.outgoingEdges.At( (i-1+n) % n ).(*Edge)
-		start.outgoingEdges.Insert(i,e)
+		n := start.OutgoingEdges.Len()
+		e.prev = start.OutgoingEdges.At(i %n ).(*Edge).twin
+		f.next = start.OutgoingEdges.At( (i-1+n) % n ).(*Edge)
+		start.OutgoingEdges.Insert(i,e)
 	}
 	f.next.prev = f
 	e.prev.next = e	
 
-	if end.outgoingEdges.Len() == 0 {
-		end.outgoingEdges.Push(f)
+	if end.OutgoingEdges.Len() == 0 {
+		end.OutgoingEdges.Push(f)
 		e.next = f
 		f.prev = e
 	} else {
 		i := end.EdgeIndexCounterClockwiseOf(f)
-		n := end.outgoingEdges.Len()
-		f.prev = end.outgoingEdges.At(i %n).(*Edge).twin
-		e.next = end.outgoingEdges.At( (i-1+n) %n ).(*Edge)
-		end.outgoingEdges.Insert(i,f)
+		n := end.OutgoingEdges.Len()
+		f.prev = end.OutgoingEdges.At(i %n).(*Edge).twin
+		e.next = end.OutgoingEdges.At( (i-1+n) %n ).(*Edge)
+		end.OutgoingEdges.Insert(i,f)
 	}
 	f.prev.next = f
 	e.next.prev = e
@@ -287,7 +293,7 @@ func (m *Map) AdjacencyMatrix() [][]bool {
 		for j:=0; j < m.Verticies.Len(); j++ {
 			if i == j { continue }
 			v := m.Verticies.At(j).(*Vertex)
-			u.outgoingEdges.Do(func (e interface{}) {
+			u.OutgoingEdges.Do(func (e interface{}) {
 				mat[i][j] = mat[i][j] || v.Equal(e.(*Edge).end.Point)
 			})
 		}
