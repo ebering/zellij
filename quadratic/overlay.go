@@ -175,20 +175,20 @@ func (m *Map) Overlay(n * Map,mergeFaces func(interface{},interface{}) (interfac
 		// Setting up edges
 		nv := NewVertex(evt.point.Copy())
 		R.Do(func(r interface{}) {
-			nv.outgoingEdges.Push(r.(*Edge).twin)
+			nv.OutgoingEdges.Push(r.(*Edge).twin)
 			o.Edges.Push(r)
 			o.Edges.Push(r.(*Edge).twin)
 		})
 		L.Do(func(l interface{}) {
 			l.(*Edge).start = nv
 			l.(*Edge).twin.end = nv
-			nv.outgoingEdges.Push(l)
+			nv.OutgoingEdges.Push(l)
 		})
-		sort.Sort(nv.outgoingEdges)
+		sort.Sort(nv.OutgoingEdges)
 
-		for i:=0; i < nv.outgoingEdges.Len(); i++ {
-			e := nv.outgoingEdges.At(i).(*Edge)
-			f := nv.outgoingEdges.At((i+1) % nv.outgoingEdges.Len()).(*Edge)
+		for i:=0; i < nv.OutgoingEdges.Len(); i++ {
+			e := nv.OutgoingEdges.At(i).(*Edge)
+			f := nv.OutgoingEdges.At((i+1) % nv.OutgoingEdges.Len()).(*Edge)
 			e.prev = f.twin
 			f.twin.next = e
 		}
@@ -204,7 +204,7 @@ func (m *Map) Overlay(n * Map,mergeFaces func(interface{},interface{}) (interfac
 			sb := T.segments.At(above-1).(*Edge)
 			if sa.twin.face == sb.face  {
 				onface := false
-				nv.outgoingEdges.Do(func (e interface{}) {
+				nv.OutgoingEdges.Do(func (e interface{}) {
 					onface = onface || e.(*Edge).face == sb.face || e.(*Edge).newFace == sb.face
 				})
 				if !onface {

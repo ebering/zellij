@@ -312,3 +312,10 @@ func (m *Map) Isomorphic(n *Map) bool {
 	}
 	return true
 }
+
+func (m *Map) SetGeneration(g int) {
+	m.Edges.Do(func (E interface{}) {
+		e := E.(*Edge)
+		e.Generation = g
+	})
+}
