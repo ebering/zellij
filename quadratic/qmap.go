@@ -279,6 +279,9 @@ func (m *Map) RotatePi4(n int) (*Map){
 	m.Verticies.Do(func (v interface{}) {
 		v.(*Vertex).RotatePi4(n)
 	})
+	m.Verticies.Do(func (v interface{}) {
+		sort.Sort(v.(*Vertex).OutgoingEdges)
+	})
 	return m
 }
 
@@ -303,6 +306,19 @@ func (m *Map) AdjacencyMatrix() [][]bool {
 
 func (m *Map) Isomorphic(n *Map) bool {
 	if m.Verticies.Len() != n.Verticies.Len() || m.Edges.Len() != n.Edges.Len() { return false }
+
+	sort.Sort(m.Verticies)
+	sort.Sort(n.Verticies)
+
+	for i := 0; i < m.Verticies.Len(); i++ {
+		u := m.Verticies.At(i).(*Vertex)
+		v := n.Verticies.At(i).(*Vertex)
+		if u.OutgoingEdges.Len() != v.OutgoingEdges.Len() { return false }
+		for j := 0; j < u.OutgoingEdges.Len(); j++ {
+			if u.OutgoingEdges.At(j).(*Edge).IntHeading() != v.OutgoingEdges.At(j).(*Edge).IntHeading() { return false }
+		}
+	}
+
 	mA := m.AdjacencyMatrix()
 	nA := n.AdjacencyMatrix()
 	for i,r := range(mA) {
