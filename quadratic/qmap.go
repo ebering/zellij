@@ -118,6 +118,7 @@ type Face struct {
 }
 
 func (f * Face) DoEdges(D func (*Edge) ()) {
+	D(f.boundary)
 	for l := f.boundary.next; l != f.boundary; l = l.next {
 		D(l)
 	}
@@ -241,6 +242,7 @@ func (m *Map) Copy() (* Map) {
 			e.copy = c.JoinVerticies(e.start.copy,e.end.copy)
 			e.twin.copy = e.copy.twin
 			e.copy.Generation = e.Generation
+			e.copy.twin.Generation = e.twin.Generation
 		}
 	})
 	m.Faces.Do(func (f interface{}) {
