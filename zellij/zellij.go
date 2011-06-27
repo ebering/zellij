@@ -1,8 +1,10 @@
 package zellij
 
 import "../quadratic/quadratic"
-import "sort"
+import "container/vector"
+import "container/list"
 import "os"
+import "fmt"
 
 func TileMap(s string,Generation int) *quadratic.Map {
 	tilePoints := make([]*quadratic.Point, len(s))
@@ -24,36 +26,45 @@ func PathMap(s string) *quadratic.Map {
 	return quadratic.PathMap(tilePoints)
 }
 
-func TileRegion(xmin,xmax,ymin,ymax *quadratic.Integer) (<-chan *quadratic.Map, chan<- int) {
+func TilePlane() (<-chan *quadratic.Map, chan<- int) {
 	//center := quadratic.NewPoint(xmax.Sub(xmin),ymax.Sub(ymin))
-	intermediateTilings := make(chan *quadratic.Map,100)
-	finalTilings := make(chan *quadratic.Map)
-	halt := make(chan int)
-	bc := BoundsChecker(xmin,xmax,ymin,ymax)
-	intermediateTilings <- TileMap(Tiles[0],0)
-	go func () {
-		for {
-			T := <-intermediateTilings
-			for _,t := range(Tiles) {
-				go addTileByEdge(intermediateTilings,finalTilings,bc,T,t)
-			} 
-			finalTilings <- T
-		}
-	}()
+	intermediateTilings := make(chan *list.List,1)
+	finalTilings := make(chan *quadratic.Map,1000)
+	halt := make(chan int,Workers)
+	L := list.New()
+	L.PushBack(TileMap(Tiles[0],0))
+	intermediateTilings <- L
+	for i:= 0; i < Workers; i++ {
+		go tileWorker(intermediateTilings,finalTilings,halt)
+	}
 	return finalTilings,halt
 }
-
-func BoundsChecker(xmin,xmax,ymin,ymax *quadratic.Integer) (func (*quadratic.Map) bool) {
-	return func (m *quadratic.Map) bool {
-		ret := true
-		m.Verticies.Do(func (l interface{}) {
-			v := l.(*quadratic.Vertex)
-			ret = ret && xmin.Less(v.X()) && v.X().Less(xmax) && ymin.Less(v.Y()) && v.Y().Less(ymax)
-		})
-		return ret
+	
+func tileWorker (source chan *list.List, sink chan<- *quadratic.Map, halt chan int) {
+	localSink := list.New()
+	for {
+		select {
+			case L := <-source:
+				if L.Len() == 0 { source <- L; continue }
+				T := L.Remove(L.Front()).(*quadratic.Map)
+				source <- L
+				if T.Faces.Len() > 10 {
+					sink <- T
+					continue
+				}
+				fmt.Fprintf(os.Stderr,"currently have %v faces\n",T.Faces.Len())
+				localSink.Init()
+				addTilesByEdge(localSink,T)
+				L = <-source
+				L.PushFrontList(localSink)
+				source <- L
+			case <-halt:
+				halt <- 1
+				return
+		}
 	}
 }
-	
+
 func Overlay(f interface{}, g interface{}) (interface{},os.Error) {
 	if f.(string) == "inner" && g.(string) == "inner" {
 		return nil,os.NewError("cannot overlap zellij tiles")
@@ -63,44 +74,51 @@ func Overlay(f interface{}, g interface{}) (interface{},os.Error) {
 	return "outer",nil
 }
 
-func addTileByEdge(sink chan<- *quadratic.Map, finalSink chan<- *quadratic.Map, boundsCheck func(*quadratic.Map) bool, T *quadratic.Map, t string) {
-	sort.Sort(GenerationalEdges{T.Edges})
-	onGeneration := T.Edges.At(0).(*quadratic.Edge).Generation
-	q := TileMap(t,onGeneration+1)
+func addTilesByEdge(sink *list.List, T *quadratic.Map ) {
+	ActiveFaces := new(vector.Vector)
+	onGeneration := -1
 	T.Faces.Do(func (F interface{}) {
 		Fac := F.(*quadratic.Face)
 		if(Fac.Value.(string) != "outer") {
 			return
 		}
-		Fac.DoEdges(func (e (*quadratic.Edge)) {
-			if (e.Generation != onGeneration) {
-				return
+		ActiveFaces.Push(Fac)
+		Fac.DoEdges(func (e *quadratic.Edge) {
+			//fmt.Fprintf(os.Stderr,"edge generation: %v onGen: %v\n",e.Generation,onGeneration)
+			if onGeneration < 0 || e.Generation < onGeneration {
+				onGeneration = e.Generation
 			}
-			q.Edges.Do(func (l interface{}) {
-				f := l.(*quadratic.Edge)
-				if e.IntHeading() == f.IntHeading() && !e.Start().Point.Equal(f.Start().Point) && e.Start().Less(e.End()) {
-					Q,ok := T.Overlay(q.Copy().Translate(f.Start(),e.Start()),Overlay)
-					if ok == nil && !Q.Isomorphic(T) && LegalVertexFigures(Q) {
-						sink <- Q
-					} 
+		})
+	})
+	//fmt.Fprintf(os.Stderr,"onGen: %v\n",onGeneration)
+	for _,t := range(TileMaps) {
+		q := t.Copy()
+		q.SetGeneration(onGeneration+1)
+		ActiveFaces.Do(func (F interface{}) {
+			Fac := F.(*quadratic.Face)
+			Fac.DoEdges(func (e (*quadratic.Edge)) {
+				if (e.Generation != onGeneration) {
+					return
 				}
+				q.Edges.Do(func (l interface{}) {
+					f := l.(*quadratic.Edge)
+					if e.IntHeading() == f.IntHeading()  {
+						Q,ok := T.Overlay(q.Copy().Translate(f.Start(),e.Start()),Overlay)
+						if ok == nil && !Q.Isomorphic(T) && legalVertexFigures(Q) && !duplicateTiling(sink,Q) {
+							sink.PushBack(Q)
+						}
+					}
+				})
 			})
 		})
-	})
+	}
 }
 
-func addTileByVertex(sink chan<- *quadratic.Map, T *quadratic.Map, t string) {
-	T.Verticies.Do(func (l interface{}) {
-		v := l.(*quadratic.Vertex)
-		q := TileMap(t,0)
-		q.Verticies.Do(func (l interface{}) {
-			u := l.(*quadratic.Vertex)
-			if !v.Point.Equal(u.Point) {
-				Q,ok := T.Overlay(q.Copy().Translate(u,v),Overlay)
-				if ok == nil && !Q.Isomorphic(T) {
-					sink <- Q
-				} 
-			}
-		})
-	})
+func duplicateTiling(tilings *list.List,T *quadratic.Map) bool {
+	for l := tilings.Front(); l != nil; l = l.Next() {
+		if T.Isomorphic(l.Value.(*quadratic.Map)) {
+			return true
+		}
+	}
+	return false
 }
