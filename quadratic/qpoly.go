@@ -32,6 +32,7 @@ func PolygonMap(verts [] *Point) (* Map) {
 	}
 	m.Faces.Push(innerFace)
 	m.Faces.Push(outerFace)
+	m.Init()
 	return m
 }
 
@@ -54,6 +55,7 @@ func PathMap(verts [] *Point) (* Map) {
 		e.twin.face = outerFace
 		outerFace.boundary = e
 	}
+	m.Init()
 	return m
 }
 

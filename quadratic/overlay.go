@@ -312,5 +312,6 @@ func (m *Map) Overlay(n * Map,mergeFaces func(interface{},interface{}) (interfac
 		return o,os.NewError(leFuck)
 	}
 
+	o.Init()
 	return o,nil
 }

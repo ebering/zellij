@@ -49,6 +49,12 @@ func (p *Point) Equal(q *Point) (bool){
 	return p.x.Equal(q.x) && p.y.Equal(q.y)
 }
 
+func DistanceSquared( p,q *Point) (* Integer) {
+	dy := q.y.Sub(p.y)
+	dx := q.x.Sub(p.x)
+	return dy.Mul(dy).Add(dx.Mul(dx))
+}
+
 func MakeTranslation(from,to *Point) (func (*Point) (*Point)) {
 	deltax := to.x.Sub(from.x)
 	deltay := to.y.Sub(from.y)

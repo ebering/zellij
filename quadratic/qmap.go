@@ -61,6 +61,10 @@ func (e * Edge) Equal( f * Edge) bool {
 	return e.start.Point.Equal(f.start.Point) && e.end.Point.Equal(f.end.Point)
 }
 
+func (e * Edge) LengthSquared() *Integer {
+	return DistanceSquared(e.start.Point,e.end.Point)
+}
+
 func (e * Edge) Line() (*Line){
 	return NewLine(e.start.Point,e.end.Point)
 }
@@ -127,10 +131,19 @@ func (f * Face) DoEdges(D func (*Edge) ()) {
 // Represents a planar map
 type Map struct {
 	Verticies, Edges, Faces *vector.Vector
+	adjacencyMatrix [][]bool
+}
+
+func (m * Map) Init() {
+	m.Verticies.Do(func (v interface{}) {
+		sort.Sort(v.(*Vertex).OutgoingEdges)
+	})
+	sort.Sort(m.Verticies)
+	m.adjacencyMatrix = m.makeAdjacencyMatrix()
 }
 
 func NewMap() (* Map) {
-	return &Map{new(vector.Vector),new(vector.Vector),new(vector.Vector)}
+	return &Map{new(vector.Vector),new(vector.Vector),new(vector.Vector),make([][]bool,1)}
 }
 
 
@@ -281,13 +294,11 @@ func (m *Map) RotatePi4(n int) (*Map){
 	m.Verticies.Do(func (v interface{}) {
 		v.(*Vertex).RotatePi4(n)
 	})
-	m.Verticies.Do(func (v interface{}) {
-		sort.Sort(v.(*Vertex).OutgoingEdges)
-	})
+	m.Init()
 	return m
 }
 
-func (m *Map) AdjacencyMatrix() [][]bool {
+func (m *Map) makeAdjacencyMatrix() [][]bool {
 	mat := make([][]bool,m.Verticies.Len())
 	for i,_ := range(mat) {
 		mat[i] = make([]bool,m.Verticies.Len())
@@ -306,28 +317,23 @@ func (m *Map) AdjacencyMatrix() [][]bool {
 	return mat
 }
 
+func (m *Map) AdjacencyMatrix() [][]bool {
+	return m.adjacencyMatrix
+}
+
 func (m *Map) Isomorphic(n *Map) bool {
 	if m.Verticies.Len() != n.Verticies.Len() || m.Edges.Len() != n.Edges.Len() { return false }
-
-	sort.Sort(m.Verticies)
-	sort.Sort(n.Verticies)
 
 	for i := 0; i < m.Verticies.Len(); i++ {
 		u := m.Verticies.At(i).(*Vertex)
 		v := n.Verticies.At(i).(*Vertex)
 		if u.OutgoingEdges.Len() != v.OutgoingEdges.Len() { return false }
 		for j := 0; j < u.OutgoingEdges.Len(); j++ {
-			if u.OutgoingEdges.At(j).(*Edge).IntHeading() != v.OutgoingEdges.At(j).(*Edge).IntHeading() { return false }
+			if u.OutgoingEdges.At(j).(*Edge).IntHeading() != v.OutgoingEdges.At(j).(*Edge).IntHeading() ||
+				!u.OutgoingEdges.At(j).(*Edge).LengthSquared().Equal(v.OutgoingEdges.At(j).(*Edge).LengthSquared()) { return false }
 		}
 	}
 
-	mA := m.AdjacencyMatrix()
-	nA := n.AdjacencyMatrix()
-	for i,r := range(mA) {
-		for j,v := range(r) {
-			if v != nA[i][j] { return false }
-		}
-	}
 	return true
 }
 
