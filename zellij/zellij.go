@@ -33,14 +33,24 @@ func TilePlane() (<-chan *quadratic.Map, chan<- int) {
 	halt := make(chan int,Workers)
 	L := list.New()
 	L.PushBack(TileMap(Tiles[0],0))
+	L.Front().Value.(*quadratic.Map).Faces.Do(func (f interface{}) {
+		F := f.(*quadratic.Face)
+		if F.Value.(string) == "outer" {
+			F.Value = "active"
+		}
+	})
 	intermediateTilings <- L
 	for i:= 0; i < Workers; i++ {
-		go tileWorker(intermediateTilings,finalTilings,halt)
+		localMaps := make([]*quadratic.Map,len(TileMaps))
+		for j,r := range(TileMaps) {
+			localMaps[j] = r.Copy()
+		}
+		go tileWorker(intermediateTilings,finalTilings,halt,localMaps)
 	}
 	return finalTilings,halt
 }
 	
-func tileWorker (source chan *list.List, sink chan<- *quadratic.Map, halt chan int) {
+func tileWorker (source chan *list.List, sink chan<- *quadratic.Map, halt chan int, tileMaps []*quadratic.Map) {
 	localSink := list.New()
 	for {
 		select {
@@ -48,14 +58,15 @@ func tileWorker (source chan *list.List, sink chan<- *quadratic.Map, halt chan i
 				if L.Len() == 0 { source <- L; continue }
 				T := L.Remove(L.Front()).(*quadratic.Map)
 				source <- L
-				if T.Faces.Len() > 10 {
+				if T.Faces.Len() > 60 {
 					sink <- T
 					continue
 				}
 				fmt.Fprintf(os.Stderr,"currently have %v faces\n",T.Faces.Len())
 				localSink.Init()
-				addTilesByEdge(localSink,T)
+				addTilesByEdge(localSink,T,tileMaps)
 				L = <-source
+				//removeDuplicates(L,localSink)
 				L.PushFrontList(localSink)
 				source <- L
 			case <-halt:
@@ -70,16 +81,18 @@ func Overlay(f interface{}, g interface{}) (interface{},os.Error) {
 		return nil,os.NewError("cannot overlap zellij tiles")
 	} else if f.(string) == "inner" || g.(string) == "inner" {
 		return "inner",nil
+	} else if f.(string) == "active" || g.(string) == "active" {
+		return "active",nil
 	}
 	return "outer",nil
 }
 
-func addTilesByEdge(sink *list.List, T *quadratic.Map ) {
+func addTilesByEdge(sink *list.List, T *quadratic.Map,tileMaps []*quadratic.Map) {
 	ActiveFaces := new(vector.Vector)
 	onGeneration := -1
 	T.Faces.Do(func (F interface{}) {
 		Fac := F.(*quadratic.Face)
-		if(Fac.Value.(string) != "outer") {
+		if(Fac.Value.(string) != "active") {
 			return
 		}
 		ActiveFaces.Push(Fac)
@@ -91,7 +104,7 @@ func addTilesByEdge(sink *list.List, T *quadratic.Map ) {
 		})
 	})
 	//fmt.Fprintf(os.Stderr,"onGen: %v\n",onGeneration)
-	for _,t := range(TileMaps) {
+	for _,t := range(tileMaps) {
 		q := t.Copy()
 		q.SetGeneration(onGeneration+1)
 		ActiveFaces.Do(func (F interface{}) {
@@ -102,9 +115,12 @@ func addTilesByEdge(sink *list.List, T *quadratic.Map ) {
 				}
 				q.Edges.Do(func (l interface{}) {
 					f := l.(*quadratic.Edge)
-					if e.IntHeading() == f.IntHeading()  {
+					if e.IntHeading() == f.IntHeading() && 
+						e.LengthSquared().Equal(f.LengthSquared()) &&
+						legalVertexFigure(vertexFigure(e.Start()) | vertexFigure(f.Start())) &&
+						legalVertexFigure(vertexFigure(e.End()) | vertexFigure(f.End())) {
 						Q,ok := T.Overlay(q.Copy().Translate(f.Start(),e.Start()),Overlay)
-						if ok == nil && !Q.Isomorphic(T) && legalVertexFigures(Q) && !duplicateTiling(sink,Q) {
+						if ok == nil && !Q.Isomorphic(T) && LegalVertexFigures(Q) && !duplicateTiling(sink,Q) {
 							sink.PushBack(Q)
 						}
 					}
@@ -122,3 +138,13 @@ func duplicateTiling(tilings *list.List,T *quadratic.Map) bool {
 	}
 	return false
 }
+
+func removeDuplicates(bigList *list.List, littleList *list.List) {
+	for l := bigList.Front(); l != nil; l = l.Next() {
+		for m := littleList.Front(); m != nil; m = m.Next() {
+			if l.Value.(*quadratic.Map).Isomorphic(m.Value.(*quadratic.Map)) {
+				littleList.Remove(m)
+			}
+		}
+	}
+}	
