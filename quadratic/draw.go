@@ -39,6 +39,7 @@ func (m *Map) ColourFaces(ctx *cairo.Surface)  {
 	i := 0.
 	m.Faces.Do(func (f interface{}) {
 		F,_ := f.(*Face)
+		if F.Value.(string) == "outer" || F.Value.(string) == "active" { return }
 		e := F.boundary;
 		ctx.MoveTo(e.start.Float64())
 		for f:= e.Next(); f != e; f = f.Next() {
