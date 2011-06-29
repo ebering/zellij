@@ -12,7 +12,7 @@ import "./zellij/zellij"
 
 func init() {
 	runtime.GOMAXPROCS(3)
-	ZellijTilings,reset = zellij.TilePlane()
+	ZellijTilings,reset = zellij.TileSkeleton("0246")
 }
 
 var ZellijTilings <-chan *quadratic.Map
@@ -23,6 +23,7 @@ func main() {
 	http.HandleFunc("/start",StartTiling)
 	http.HandleFunc("/tiles",RenderTiles)
 	http.HandleFunc("/previewTiles",DrawTiles)
+	http.HandleFunc("/previewSkeleton",DrawSkel)
 	err := http.ListenAndServe(":8080",nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ",err.String())
@@ -91,6 +92,25 @@ func DrawTiles(w http.ResponseWriter, req *http.Request) {
 	for _,t := range(zellij.TileMaps) {
 		t.ColourFaces(image)
 	}
+	image.Finish()
+	http.ServeFile(w,req,"svg/test-surface.svg")
+}
+
+func DrawSkel(w http.ResponseWriter, req *http.Request) {
+	e := os.Remove("svg/test-surface.svg")
+	if e != nil {
+		os.Stderr.WriteString(e.String()+"\n")
+	}	
+	image := cairo.NewSurface("svg/test-surface.svg",72*4,72*4)
+	image.SetSourceRGB(0.,0.,0.)
+	image.SetLineWidth(.1)
+	image.Translate(72*2.,72*2.)
+	image.Scale(4.,4.)
+	skel,ok := zellij.SkeletonMap("0246")
+	if ok != nil {
+		os.Stderr.WriteString(ok.String()+"\n")
+	}
+	skel.DrawEdges(image)
 	image.Finish()
 	http.ServeFile(w,req,"svg/test-surface.svg")
 }
