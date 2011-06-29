@@ -40,16 +40,16 @@ func init() {
 	Points["C"], _ = quadratic.PointFromString("-2,-2,-2,0")
 	Points["D"], _ = quadratic.PointFromString("2,2,-2,0")
 
-	Tiles = make([]string,9 )
+	Tiles = make([]string,6 )
 	Tiles[0] = "adehnrvuwtspjgbc"
-	Tiles[1] = "beovsi"
+	Tiles[1] = "ibehnrvs"
 	Tiles[2] = "cdhvtj"
 	Tiles[3] = "dBrh"
 	Tiles[4] = "Bnhe"
 	Tiles[5] = "leov"
-	Tiles[6] = "ibelvs"
-	Tiles[7] = "ibehnrvs"
-	Tiles[8] = "bcfdehmrvuqtspkg"
+	//Tiles[6] = "beovsi"
+	//Tiles[7] = "ibelvs"
+	//Tiles[8] = "bcfdehmrvuqtspkg"
 
 	for _,t := range(Tiles) {
 		base := TileMap(t,0)
