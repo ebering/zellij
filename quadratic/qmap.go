@@ -128,6 +128,22 @@ func (f * Face) DoEdges(D func (*Edge) ()) {
 	}
 }
 
+func (f * Face) Inner() bool {
+	leastVtx := f.boundary.start
+	for l := f.boundary.next; l != f.boundary; l = l.next {
+		if l.start.Less(leastVtx) {
+			leastVtx = l.start
+		}
+	}
+	var e2 *Edge
+	leastVtx.OutgoingEdges.Do(func (e interface{}) {
+		if e.(*Edge).face == f {
+			e2 = e.(*Edge)
+		}
+	})
+	return e2.prev.Less(e2)
+}
+
 // Represents a planar map
 type Map struct {
 	Verticies, Edges, Faces *vector.Vector
