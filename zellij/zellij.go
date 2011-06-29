@@ -26,6 +26,23 @@ func PathMap(s string) *quadratic.Map {
 	return quadratic.PathMap(tilePoints)
 }
 
+/*func TileSkeleton(skeleton string) (<-chan *quadratic.Map, chan<- int) {
+	intermediateTilings := make(chan *list.List,1)
+	finalTilings := make(chan *quadratic.Map,1000)
+	halt := make(chan int,Workers)
+	L := list.New()
+	L.PushBack(SkeletonMap(skeleton))
+	intermediateTilings <- L
+	for i:= 0; i < Workers; i++ {
+		localMaps := make([]*quadratic.Map,len(TileMaps))
+		for j,r := range(TileMaps) {
+			localMaps[j] = r.Copy()
+		}
+		go tileWorker(intermediateTilings,finalTilings,halt,localMaps)
+	}
+	return finalTilings,halt
+}*/
+
 func TilePlane() (<-chan *quadratic.Map, chan<- int) {
 	//center := quadratic.NewPoint(xmax.Sub(xmin),ymax.Sub(ymin))
 	intermediateTilings := make(chan *list.List,1)

@@ -40,14 +40,14 @@ func init() {
 	Points["C"], _ = quadratic.PointFromString("-2,-2,-2,0")
 	Points["D"], _ = quadratic.PointFromString("2,2,-2,0")
 
-	Tiles = make([]string,6 )
+	Tiles = make([]string,7 )
 	Tiles[0] = "adehnrvuwtspjgbc"
-	Tiles[1] = "ibehnrvs"
-	Tiles[2] = "cdhvtj"
-	Tiles[3] = "dBrh"
-	Tiles[4] = "Bnhe"
-	Tiles[5] = "leov"
-	//Tiles[6] = "beovsi"
+	Tiles[1] = "beovsi"
+	Tiles[2] = "jcehnrvt"
+	Tiles[3] = "cdhvtj"
+	Tiles[4] = "dBrh"
+	Tiles[5] = "Bnhe"
+	Tiles[6] = "leov"
 	//Tiles[7] = "ibelvs"
 	//Tiles[8] = "bcfdehmrvuqtspkg"
 
