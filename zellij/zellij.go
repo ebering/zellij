@@ -26,22 +26,26 @@ func PathMap(s string) *quadratic.Map {
 	return quadratic.PathMap(tilePoints)
 }
 
-/*func TileSkeleton(skeleton string) (<-chan *quadratic.Map, chan<- int) {
+func TileSkeleton(skeleton string) (<-chan *quadratic.Map, chan<- int) {
 	intermediateTilings := make(chan *list.List,1)
 	finalTilings := make(chan *quadratic.Map,1000)
 	halt := make(chan int,Workers)
 	L := list.New()
-	L.PushBack(SkeletonMap(skeleton))
+	skel,ok := SkeletonMap(skeleton)
+	if ok != nil {
+		panic("Bad skeleton: "+ok.String()+"\n")
+	}
+	L.PushBack(skel)
 	intermediateTilings <- L
 	for i:= 0; i < Workers; i++ {
 		localMaps := make([]*quadratic.Map,len(TileMaps))
 		for j,r := range(TileMaps) {
 			localMaps[j] = r.Copy()
 		}
-		go tileWorker(intermediateTilings,finalTilings,halt,localMaps)
+		go tileWorker(intermediateTilings,finalTilings,halt,localMaps,0)
 	}
 	return finalTilings,halt
-}*/
+}
 
 func TilePlane() (<-chan *quadratic.Map, chan<- int) {
 	//center := quadratic.NewPoint(xmax.Sub(xmin),ymax.Sub(ymin))
@@ -62,12 +66,12 @@ func TilePlane() (<-chan *quadratic.Map, chan<- int) {
 		for j,r := range(TileMaps) {
 			localMaps[j] = r.Copy()
 		}
-		go tileWorker(intermediateTilings,finalTilings,halt,localMaps)
+		go tileWorker(intermediateTilings,finalTilings,halt,localMaps,20)
 	}
 	return finalTilings,halt
 }
 	
-func tileWorker (source chan *list.List, sink chan<- *quadratic.Map, halt chan int, tileMaps []*quadratic.Map) {
+func tileWorker (source chan *list.List, sink chan<- *quadratic.Map, halt chan int, tileMaps []*quadratic.Map,maxtiles int) {
 	localSink := list.New()
 	for {
 		select {
@@ -75,7 +79,14 @@ func tileWorker (source chan *list.List, sink chan<- *quadratic.Map, halt chan i
 				if L.Len() == 0 { source <- L; continue }
 				T := L.Remove(L.Front()).(*quadratic.Map)
 				source <- L
-				if T.Faces.Len() > 60 {
+				var activeFaces int
+				T.Faces.Do(func (f interface{}) {
+					if f.(*quadratic.Face).Value.(string) == "active" { activeFaces++}
+				})
+				if T.Faces.Len() > maxtiles && maxtiles > 0 {
+					sink <- T
+					continue
+				} else if activeFaces == 0 {
 					sink <- T
 					continue
 				}
