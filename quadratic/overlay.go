@@ -278,7 +278,7 @@ func (m *Map) Overlay(n * Map,mergeFaces func(interface{},interface{}) (interfac
 			for f,_ := range(oldFaces) {
 				leFuck = leFuck + fmt.Sprintf("face %p from: %p containing: %v\n",f,f.fromMap,f.Value)
 			}
-			os.Stderr.WriteString(leFuck)
+			//os.Stderr.WriteString(leFuck)
 		} else if len(oldFaces) == 0 {
 			panic(fmt.Sprintf("No old faces. e: %v, e.face: %+v, maps: m: %p n: %p o: %p\n",e,e.face,m,n,o))
 		}
