@@ -149,10 +149,10 @@ func addTilesByEdge(T *quadratic.Map,tileMaps []*quadratic.Map) (* list.List) {
 
 		q.Edges.Do(func (l interface{}) {
 			f := l.(*quadratic.Edge)
-			if e.IntHeading() == f.IntHeading() {/* && 
+			if e.IntHeading() == f.IntHeading()  && 
 				e.LengthSquared().Equal(f.LengthSquared())  &&
 				legalVertexFigure(vertexFigure(e.Start()) | vertexFigure(f.Start())) &&
-				legalVertexFigure(vertexFigure(e.End()) | vertexFigure(f.End())) { */
+				legalVertexFigure(vertexFigure(e.End()) | vertexFigure(f.End())) { 
 				Q,ok := T.Overlay(q.Copy().Translate(f.Start(),e.Start()),Overlay)
 				if ok == nil && Q != nil &&  LegalVertexFigures(Q)  {
 					//fmt.Fprintf(os.Stderr,"adding %v to %v dup checks %v %v\n",f,e,duplicateTiling(sink,Q),duplicateTiling(oldSink,Q))
