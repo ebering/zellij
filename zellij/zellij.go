@@ -4,7 +4,7 @@ import "../quadratic/quadratic"
 import "container/vector"
 import "container/list"
 import "os"
-import "fmt"
+//import "fmt"
 import "sort"
 
 func TileMap(s string,Generation int) *quadratic.Map {
@@ -88,7 +88,7 @@ func tileWorker (source chan *list.List, sink chan<- *quadratic.Map, halt chan i
 				} else {
 					sink <- T
 				}
-				fmt.Fprintf(os.Stderr,"currently have %v faces\n",T.Faces.Len())
+				//fmt.Fprintf(os.Stderr,"currently have %v faces\n",T.Faces.Len())
 				localSink := addTilesByEdge(T,tileMaps)
 				L = <-source
 				L.PushFrontList(localSink)
@@ -139,7 +139,7 @@ func addTilesByEdge(T *quadratic.Map,tileMaps []*quadratic.Map) (* list.List) {
 			activeEdges.Push(e)
 		})
 	})
-	fmt.Fprintf(os.Stderr,"onGen: %v have %v active edges\n",onGeneration,activeEdges.Len())
+	//fmt.Fprintf(os.Stderr,"onGen: %v have %v active edges\n",onGeneration,activeEdges.Len())
 	sort.Sort(activeEdges)
 	e := activeEdges.At(0).(*quadratic.Edge)
 	sink := new(list.List)
@@ -161,7 +161,7 @@ func addTilesByEdge(T *quadratic.Map,tileMaps []*quadratic.Map) (* list.List) {
 			}
 		})
 	}
-	fmt.Fprintf(os.Stderr,"on generation %v found %v children\n",onGeneration,sink.Len())
+	//fmt.Fprintf(os.Stderr,"on generation %v found %v children\n",onGeneration,sink.Len())
 	
 	return sink
 }
