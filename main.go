@@ -12,7 +12,8 @@ import "./zellij/zellij"
 
 func init() {
 	runtime.GOMAXPROCS(3)
-	ZellijTilings,reset = zellij.TileSkeleton("0246")
+	ZellijTilings,reset = zellij.TileSkeleton("00224466")
+	//ZellijTilings,reset = zellij.TilePlane()
 }
 
 var ZellijTilings <-chan *quadratic.Map
@@ -43,21 +44,24 @@ func RenderTiles(w http.ResponseWriter, req *http.Request) {
 	t := <-ZellijTilings
 
 	/*t := zellij.TileMap(zellij.Tiles[0],0)
-	u := zellij.TileMap(zellij.Tiles[5],0)
+	u := zellij.TileMap(zellij.Tiles[3],0)
+	u.Translate(quadratic.NewVertex(zellij.Points["m"]),quadratic.NewVertex(zellij.Points["j"]))
+	u.RotatePi4(1)
 	
-	v,ok := t.Overlay(u,zellij.Overlay)
-	u = zellij.TileMap(zellij.Tiles[4],0)
+	v,ok := u.Overlay(u.Copy().RotatePi4(2),zellij.Overlay)
+	v,ok = v.Overlay(u.Copy().RotatePi4(4),zellij.Overlay)
+	v,ok = v.Overlay(u.Copy().RotatePi4(6),zellij.Overlay)
+	u = zellij.TileMap(zellij.Tiles[8],0)
+	u.Translate(quadratic.NewVertex(zellij.Points["l"]),quadratic.NewVertex(zellij.Points["a"]))
 	v,ok = v.Overlay(u,zellij.Overlay)
-	u = zellij.TileMap(zellij.Tiles[3],0)
-	v,ok = v.Overlay(u,zellij.Overlay)
-	u = zellij.TileMap(zellij.Tiles[2],0)
-	v,ok = v.Overlay(u,zellij.Overlay)
-	u = zellij.TileMap(zellij.Tiles[1],0).Translate(quadratic.NewVertex(zellij.Points["i"]),quadratic.NewVertex(zellij.Points["n"]))
-	v,ok = v.Overlay(u,zellij.Overlay)
+	v,ok = v.Overlay(u.Copy().RotatePi4(2),zellij.Overlay)
+	v,ok = v.Overlay(u.Copy().RotatePi4(4),zellij.Overlay)
+	v,ok = v.Overlay(u.Copy().RotatePi4(6),zellij.Overlay)
+	v,ok = v.Overlay(t,zellij.Overlay)
 	if ok != nil {
 		os.Stderr.WriteString(ok.String()+"\n")
 	}
-	/*v,ok = v.Overlay(t.Translate(quadratic.NewVertex(zellij.Points["s"]),quadratic.NewVertex(zellij.Points["e"])),zellij.Overlay)
+	v,ok = v.Overlay(t.Translate(quadratic.NewVertex(zellij.Points["s"]),quadratic.NewVertex(zellij.Points["e"])),zellij.Overlay)
 	if ok != nil {
 		os.Stderr.WriteString(ok.String()+"\n")
 	}
