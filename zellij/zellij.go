@@ -1,11 +1,9 @@
 package zellij
 
 import "../quadratic/quadratic"
-import "container/vector"
 import "container/list"
 import "os"
 //import "fmt"
-import "sort"
 
 func TileMap(s string,Generation int) *quadratic.Map {
 	tilePoints := make([]*quadratic.Point, len(s))
@@ -27,7 +25,7 @@ func PathMap(s string) *quadratic.Map {
 	return quadratic.PathMap(tilePoints)
 }
 
-func TileSkeleton(skeleton string) (<-chan *quadratic.Map, chan<- int) {
+func TileSkeleton(skeleton string,showIntermediate bool) (<-chan *quadratic.Map, chan<- int) {
 	intermediateTilings := make(chan *list.List,1)
 	finalTilings := make(chan *quadratic.Map,1000)
 	halt := make(chan int,Workers)
@@ -43,12 +41,12 @@ func TileSkeleton(skeleton string) (<-chan *quadratic.Map, chan<- int) {
 		for j,r := range(TileMaps) {
 			localMaps[j] = r.Copy()
 		}
-		go tileWorker(intermediateTilings,finalTilings,halt,localMaps,0)
+		go tileWorker(intermediateTilings,finalTilings,halt,localMaps,chooseNextEdgeByLocation,0,showIntermediate)
 	}
 	return finalTilings,halt
 }
 
-func TilePlane() (<-chan *quadratic.Map, chan<- int) {
+func TilePlane(maxtiles int,showIntermediate bool) (<-chan *quadratic.Map, chan<- int) {
 	//center := quadratic.NewPoint(xmax.Sub(xmin),ymax.Sub(ymin))
 	intermediateTilings := make(chan *list.List,1)
 	finalTilings := make(chan *quadratic.Map,1000)
@@ -67,12 +65,12 @@ func TilePlane() (<-chan *quadratic.Map, chan<- int) {
 		for j,r := range(TileMaps) {
 			localMaps[j] = r.Copy()
 		}
-		go tileWorker(intermediateTilings,finalTilings,halt,localMaps,20)
+		go tileWorker(intermediateTilings,finalTilings,halt,localMaps,chooseNextEdgeByGeneration,maxtiles,showIntermediate)
 	}
 	return finalTilings,halt
 }
 	
-func tileWorker (source chan *list.List, sink chan<- *quadratic.Map, halt chan int, tileMaps []*quadratic.Map,maxtiles int) {
+func tileWorker (source chan *list.List, sink chan<- *quadratic.Map, halt chan int, tileMaps []*quadratic.Map,chooseNextEdge func (*quadratic.Map) (*quadratic.Edge), maxtiles int,showIntermediate bool) {
 	for {
 		select {
 			case L := <-source:
@@ -85,11 +83,11 @@ func tileWorker (source chan *list.List, sink chan<- *quadratic.Map, halt chan i
 				} else if noActiveFaces(T) {
 					sink <- T
 					continue
-				} else {
+				} else if showIntermediate {
 					sink <- T
 				}
 				//fmt.Fprintf(os.Stderr,"currently have %v faces\n",T.Faces.Len())
-				localSink := addTilesByEdge(T,tileMaps)
+				localSink := addTilesByEdge(T,tileMaps,chooseNextEdge)
 				L = <-source
 				L.PushFrontList(localSink)
 				source <- L
@@ -111,37 +109,9 @@ func Overlay(f interface{}, g interface{}) (interface{},os.Error) {
 	return "outer",nil
 }
 
-func addTilesByEdge(T *quadratic.Map,tileMaps []*quadratic.Map) (* list.List) {
-	ActiveFaces := new(vector.Vector)
-	onGeneration := -1
-	T.Faces.Do(func (F interface{}) {
-		Fac := F.(*quadratic.Face)
-		if(Fac.Value.(string) != "active") {
-			return
-		}
-		ActiveFaces.Push(Fac)
-		Fac.DoEdges(func (e *quadratic.Edge) {
-			//fmt.Fprintf(os.Stderr,"edge generation: %v onGen: %v\n",e.Generation,onGeneration)
-			if onGeneration < 0 || e.Generation < onGeneration {
-				onGeneration = e.Generation
-			}
-		})
-	})
-
-	activeEdges := new(generationOrderedEdges)
-
-	ActiveFaces.Do(func (F interface{}) {
-		Fac := F.(*quadratic.Face)
-		Fac.DoEdges(func (e (*quadratic.Edge)) {
-			if (e.Generation != onGeneration) {
-				return
-			}
-			activeEdges.Push(e)
-		})
-	})
-	//fmt.Fprintf(os.Stderr,"onGen: %v have %v active edges\n",onGeneration,activeEdges.Len())
-	sort.Sort(activeEdges)
-	e := activeEdges.At(0).(*quadratic.Edge)
+func addTilesByEdge(T *quadratic.Map,tileMaps []*quadratic.Map, chooseNextEdge func (*quadratic.Map) (*quadratic.Edge)) (* list.List) {
+	e := chooseNextEdge(T)
+	onGeneration := e.Generation
 	sink := new(list.List)
 	for _,t := range(tileMaps) {
 		q := t.Copy()
