@@ -25,7 +25,7 @@ func (l *Line) Draw(ctx *cairo.Surface) {
 func (m *Map) DrawEdges(ctx *cairo.Surface) {
 	m.Edges.Do(func (f interface{} ) {
 		e,_ := f.(*Edge)
-		ctx.SetSourceRGBA(0.,float64((e.Generation*50)%255)/255.,0.,1.)
+		ctx.SetSourceRGBA(0.,float64((e.Generation*20)%255)/255.,0.,1.)
 		e.Line().Draw(ctx)
 	})
 	m.Verticies.Do(func (v interface{}) {
@@ -39,14 +39,18 @@ func (m *Map) ColourFaces(ctx *cairo.Surface)  {
 	i := 0.
 	m.Faces.Do(func (f interface{}) {
 		F,_ := f.(*Face)
-		if F.Value.(string) == "outer" || F.Value.(string) == "active" { return }
+		if F.Value.(string) == "outer"  { return }
 		e := F.boundary;
 		ctx.MoveTo(e.start.Float64())
 		for f:= e.Next(); f != e; f = f.Next() {
 			ctx.LineTo(f.start.Float64())
 		}
 		ctx.ClosePath()
-		ctx.SetSourceRGBA(i/n,0.,0.,1.)
+		if F.Value.(string) == "active" {
+			ctx.SetSourceRGBA(0.,0.,1.,1.)
+		} else {
+			ctx.SetSourceRGBA(i/n,0.,0.,1.)
+		}
 		ctx.Fill()
 		i = i+1.
 	})
