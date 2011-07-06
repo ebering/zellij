@@ -5,6 +5,7 @@ import "container/vector"
 import "container/list"
 import "os"
 import "fmt"
+import "sort"
 
 func TileMap(s string,Generation int) *quadratic.Map {
 	tilePoints := make([]*quadratic.Point, len(s))
@@ -72,29 +73,24 @@ func TilePlane() (<-chan *quadratic.Map, chan<- int) {
 }
 	
 func tileWorker (source chan *list.List, sink chan<- *quadratic.Map, halt chan int, tileMaps []*quadratic.Map,maxtiles int) {
-	localSink := list.New()
 	for {
 		select {
 			case L := <-source:
 				if L.Len() == 0 { source <- L; continue }
 				T := L.Remove(L.Front()).(*quadratic.Map)
 				source <- L
-				var activeFaces int
-				T.Faces.Do(func (f interface{}) {
-					if f.(*quadratic.Face).Value.(string) == "active" { activeFaces++}
-				})
 				if T.Faces.Len() > maxtiles && maxtiles > 0 {
 					sink <- T
 					continue
-				} else if activeFaces == 0 {
+				} else if noActiveFaces(T) {
 					sink <- T
 					continue
+				} else {
+					sink <- T
 				}
 				fmt.Fprintf(os.Stderr,"currently have %v faces\n",T.Faces.Len())
-				localSink.Init()
-				addTilesByEdge(localSink,T,tileMaps)
+				localSink := addTilesByEdge(T,tileMaps)
 				L = <-source
-				//removeDuplicates(L,localSink)
 				L.PushFrontList(localSink)
 				source <- L
 			case <-halt:
@@ -115,7 +111,7 @@ func Overlay(f interface{}, g interface{}) (interface{},os.Error) {
 	return "outer",nil
 }
 
-func addTilesByEdge(sink *list.List, T *quadratic.Map,tileMaps []*quadratic.Map) {
+func addTilesByEdge(T *quadratic.Map,tileMaps []*quadratic.Map) (* list.List) {
 	ActiveFaces := new(vector.Vector)
 	onGeneration := -1
 	T.Faces.Do(func (F interface{}) {
@@ -131,32 +127,53 @@ func addTilesByEdge(sink *list.List, T *quadratic.Map,tileMaps []*quadratic.Map)
 			}
 		})
 	})
-	//fmt.Fprintf(os.Stderr,"onGen: %v\n",onGeneration)
+
+	activeEdges := new(generationOrderedEdges)
+
+	ActiveFaces.Do(func (F interface{}) {
+		Fac := F.(*quadratic.Face)
+		Fac.DoEdges(func (e (*quadratic.Edge)) {
+			if (e.Generation != onGeneration) {
+				return
+			}
+			activeEdges.Push(e)
+		})
+	})
+	fmt.Fprintf(os.Stderr,"onGen: %v have %v active edges\n",onGeneration,activeEdges.Len())
+	sort.Sort(activeEdges)
+	e := activeEdges.At(0).(*quadratic.Edge)
+	sink := new(list.List)
 	for _,t := range(tileMaps) {
 		q := t.Copy()
 		q.SetGeneration(onGeneration+1)
-		ActiveFaces.Do(func (F interface{}) {
-			Fac := F.(*quadratic.Face)
-			Fac.DoEdges(func (e (*quadratic.Edge)) {
-				if (e.Generation != onGeneration) {
-					return
+
+		q.Edges.Do(func (l interface{}) {
+			f := l.(*quadratic.Edge)
+			if e.IntHeading() == f.IntHeading() {/* && 
+				e.LengthSquared().Equal(f.LengthSquared())  &&
+				legalVertexFigure(vertexFigure(e.Start()) | vertexFigure(f.Start())) &&
+				legalVertexFigure(vertexFigure(e.End()) | vertexFigure(f.End())) { */
+				Q,ok := T.Overlay(q.Copy().Translate(f.Start(),e.Start()),Overlay)
+				if ok == nil && Q != nil &&  LegalVertexFigures(Q)  {
+					//fmt.Fprintf(os.Stderr,"adding %v to %v dup checks %v %v\n",f,e,duplicateTiling(sink,Q),duplicateTiling(oldSink,Q))
+					sink.PushBack(Q)
 				}
-				q.Edges.Do(func (l interface{}) {
-					f := l.(*quadratic.Edge)
-					if e.IntHeading() == f.IntHeading() && 
-						e.LengthSquared().Equal(f.LengthSquared()) &&
-						legalVertexFigure(vertexFigure(e.Start()) | vertexFigure(f.Start())) &&
-						legalVertexFigure(vertexFigure(e.End()) | vertexFigure(f.End())) {
-						Q,ok := T.Overlay(q.Copy().Translate(f.Start(),e.Start()),Overlay)
-						if ok == nil && !Q.Isomorphic(T) && LegalVertexFigures(Q) && !duplicateTiling(sink,Q) {
-							sink.PushBack(Q)
-						}
-					}
-				})
-			})
+			}
 		})
 	}
+	fmt.Fprintf(os.Stderr,"on generation %v found %v children\n",onGeneration,sink.Len())
+	
+	return sink
 }
+
+func noActiveFaces(Q *quadratic.Map) bool {
+	ret := true
+	Q.Faces.Do(func (f interface{}) {
+		ret = ret && f.(*quadratic.Face).Value.(string) != "active"
+	})
+	return ret
+}
+ 
 
 func duplicateTiling(tilings *list.List,T *quadratic.Map) bool {
 	for l := tilings.Front(); l != nil; l = l.Next() {
