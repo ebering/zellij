@@ -50,6 +50,10 @@ func (e * Edge) End() (* Vertex) {
 	return e.end
 }
 
+func (e * Edge) Face() (* Face) {
+	return e.face
+}
+
 func (e * Edge) Coterminal(f * Edge) bool {
 	return e.start.Point.Equal(f.start.Point) ||
 		e.start.Point.Equal(f.end.Point) ||
@@ -295,6 +299,7 @@ func (m *Map) Copy() (* Map) {
 			panic("map copy horrific failure")
 		}
 	})
+	c.Init()
 	return c
 }
 
