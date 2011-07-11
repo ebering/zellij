@@ -2,8 +2,8 @@ package zellij
 
 import "../quadratic/quadratic"
 
-func PlainBrush(F *quadratic.Face) (float64,float64,float64,float64) {
-	return 0.,0.,0.,0.
+func PlainBrush(F *quadratic.Face) (float64, float64, float64, float64) {
+	return 0., 0., 0., 0.
 	/*if F.Type == Tiles[6] || F.Type == Tiles[5] || F.Type == Tiles[4] || F.Type == Tiles[6] {
 		return 1.,1.,1.,1.
 	} else if F.Type == Tiles[0] || F.Type == Tiles[1] {

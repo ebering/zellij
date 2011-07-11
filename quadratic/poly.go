@@ -3,9 +3,9 @@ package quadratic
 import "os"
 import "regexp"
 
-func PolygonMap(verts [] *Point) (* Map) {
+func PolygonMap(verts []*Point) *Map {
 	m := NewMap()
-	for _,pt := range(verts) {
+	for _, pt := range verts {
 		v := NewVertex(pt)
 		m.Verticies.Push(v)
 	}
@@ -16,15 +16,15 @@ func PolygonMap(verts [] *Point) (* Map) {
 	outerFace.fromMap = m
 	outerFace.Value = "outer"
 	for i := 0; i < m.Verticies.Len(); i++ {
-		if(i == m.Verticies.Len()-1) {
-			f := m.JoinVerticies(m.Verticies.Last().(*Vertex),m.Verticies.At(0).(*Vertex))
+		if i == m.Verticies.Len()-1 {
+			f := m.JoinVerticies(m.Verticies.Last().(*Vertex), m.Verticies.At(0).(*Vertex))
 			f.face = outerFace
 			outerFace.boundary = f
 			f.twin.face = innerFace
 			innerFace.boundary = f.twin
 			break
-		} 
-		e := m.JoinVerticies(m.Verticies.At(i).(*Vertex),m.Verticies.At(i+1).(*Vertex))
+		}
+		e := m.JoinVerticies(m.Verticies.At(i).(*Vertex), m.Verticies.At(i+1).(*Vertex))
 		e.face = outerFace
 		outerFace.boundary = e
 		e.twin.face = innerFace
@@ -36,9 +36,9 @@ func PolygonMap(verts [] *Point) (* Map) {
 	return m
 }
 
-func PathMap(verts [] *Point) (* Map) {
+func PathMap(verts []*Point) *Map {
 	m := NewMap()
-	for _,pt := range(verts) {
+	for _, pt := range verts {
 		v := NewVertex(pt)
 		m.Verticies.Push(v)
 	}
@@ -49,7 +49,7 @@ func PathMap(verts [] *Point) (* Map) {
 	outerFace.fromMap = m
 	outerFace.Value = "outer"
 	for i := 0; i < m.Verticies.Len()-1; i++ {
-		e := m.JoinVerticies(m.Verticies.At(i).(*Vertex),m.Verticies.At(i+1).(*Vertex))
+		e := m.JoinVerticies(m.Verticies.At(i).(*Vertex), m.Verticies.At(i+1).(*Vertex))
 		e.face = innerFace
 		innerFace.boundary = e
 		e.twin.face = outerFace
@@ -59,16 +59,16 @@ func PathMap(verts [] *Point) (* Map) {
 	return m
 }
 
-func PolygonMapFromString(str string) (* Map,os.Error) {
+func PolygonMapFromString(str string) (*Map, os.Error) {
 	re := regexp.MustCompile("([0-9]+,[0-9]+,[0-9]+,[0-9]+)")
-	matches := re.FindAllString(str,-1)
-	points := make([]*Point,len(matches))
-	for i,m := range(matches) {
+	matches := re.FindAllString(str, -1)
+	points := make([]*Point, len(matches))
+	for i, m := range matches {
 		var ok os.Error
-		points[i],ok = PointFromString(m)
+		points[i], ok = PointFromString(m)
 		if ok != nil {
-			return nil,ok
+			return nil, ok
 		}
 	}
-	return PolygonMap(points),nil
+	return PolygonMap(points), nil
 }

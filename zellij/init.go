@@ -33,8 +33,6 @@ func init() {
 	Points["v"], _ = quadratic.PointFromString("2,0,-2,0")
 	Points["w"], _ = quadratic.PointFromString("0,0,0,-2")
 
-
-
 	Points["A"], _ = quadratic.PointFromString("-2,0,2,2")
 	Points["B"], _ = quadratic.PointFromString("2,0,2,2")
 	Points["C"], _ = quadratic.PointFromString("2,2,2,0")
@@ -50,50 +48,50 @@ func init() {
 	Points["M"], _ = quadratic.PointFromString("6,-2,-2,0")
 	Points["N"], _ = quadratic.PointFromString("6,-2,2,0")
 
-	Tiles = make([]string,1)
+	Tiles = make([]string, 1)
 	Tiles[0] = "adehnrvuwtspjgbc"
 	//Tiles = append(Tiles,"beovsi")
-	Tiles = append(Tiles,"jcehnrvt")
-	Tiles = append(Tiles,"jcehmrvt")
+	Tiles = append(Tiles, "jcehnrvt")
+	Tiles = append(Tiles, "jcehmrvt")
 	//Tiles = append(Tiles,"cdhvtj")
 	//Tiles = append(Tiles,"dCrh")
-	Tiles = append(Tiles,"Cnhe")
-	Tiles = append(Tiles,"leov")
-	Tiles = append(Tiles,"ibelvs")
+	Tiles = append(Tiles, "Cnhe")
+	Tiles = append(Tiles, "leov")
+	Tiles = append(Tiles, "ibelvs")
 	//Tiles = append(Tiles,"bcfdehmrvuqtspkg")
-	Tiles = append(Tiles,"bel")
+	Tiles = append(Tiles, "bel")
 	//Tiles = append(Tiles,"jgkp")
 	//Tiles = append(Tiles,"kfmq")
 	//Tiles = append(Tiles,"AaBeCrpHb")
-	Tiles = append(Tiles,"pdCr")
-	Tiles = append(Tiles,"jcNmrvt")
-	Tiles = append(Tiles,"jcehmMt")
+	Tiles = append(Tiles, "pdCr")
+	Tiles = append(Tiles, "jcNmrvt")
+	Tiles = append(Tiles, "jcehmMt")
 	//Tiles = append(Tiles,"bcadIMuNkg")
 	//Tiles = append(Tiles,"AaBeCnDvEwFsGjHb")
-	Tiles = append(Tiles,"bcfderwtKpjg")
+	Tiles = append(Tiles, "bcfderwtKpjg")
 
-	for _,t := range(Tiles) {
-		base := TileMap(t,0)
+	for _, t := range Tiles {
+		base := TileMap(t, 0)
 		TileMaps = append(TileMaps, GenerateOrbits(base)...)
 	}
-	
+
 	VertexFigures = []byte{
-		leftRotate(5,0),
-		leftRotate(5,1),
-		leftRotate(5,2),
-		leftRotate(5,3),
-		leftRotate(5,4),
-		leftRotate(5,5),
-		leftRotate(5,6),
-		leftRotate(5,7),
-		leftRotate(9,0),
-		leftRotate(9,1),
-		leftRotate(9,2),
-		leftRotate(9,3),
-		leftRotate(9,4),
-		leftRotate(9,5),
-		leftRotate(9,6),
-		leftRotate(9,7),
+		leftRotate(5, 0),
+		leftRotate(5, 1),
+		leftRotate(5, 2),
+		leftRotate(5, 3),
+		leftRotate(5, 4),
+		leftRotate(5, 5),
+		leftRotate(5, 6),
+		leftRotate(5, 7),
+		leftRotate(9, 0),
+		leftRotate(9, 1),
+		leftRotate(9, 2),
+		leftRotate(9, 3),
+		leftRotate(9, 4),
+		leftRotate(9, 5),
+		leftRotate(9, 6),
+		leftRotate(9, 7),
 		/*leftRotate(41,0),
 		leftRotate(41,1),
 		leftRotate(41,2),
@@ -102,19 +100,18 @@ func init() {
 		leftRotate(41,5),
 		leftRotate(41,6),
 		leftRotate(41,7),*/
-		leftRotate(75,0),
-		leftRotate(75,1),
-		leftRotate(75,2),
-		leftRotate(75,3),
-		leftRotate(75,4),
-		leftRotate(75,5),
-		leftRotate(75,6),
-		leftRotate(75,7),
-		leftRotate(85,0),
-		leftRotate(85,1),
-		leftRotate(51,0),
-		leftRotate(51,1),
-		leftRotate(51,2),
-		leftRotate(51,3)}
+		leftRotate(75, 0),
+		leftRotate(75, 1),
+		leftRotate(75, 2),
+		leftRotate(75, 3),
+		leftRotate(75, 4),
+		leftRotate(75, 5),
+		leftRotate(75, 6),
+		leftRotate(75, 7),
+		leftRotate(85, 0),
+		leftRotate(85, 1),
+		leftRotate(51, 0),
+		leftRotate(51, 1),
+		leftRotate(51, 2),
+		leftRotate(51, 3)}
 }
-

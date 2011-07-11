@@ -8,7 +8,7 @@ type generationOrderedEdges struct {
 	vector.Vector
 }
 
-func (G *generationOrderedEdges) Less(i,j int) bool {
+func (G *generationOrderedEdges) Less(i, j int) bool {
 	eI := G.At(i).(*quadratic.Edge)
 	eJ := G.At(j).(*quadratic.Edge)
 	if eI.Start().Equal(eJ.Start().Point) {
@@ -18,7 +18,7 @@ func (G *generationOrderedEdges) Less(i,j int) bool {
 }
 
 func EdgeStillActive(T *quadratic.Map, e *quadratic.Edge) bool {
-	for i := 0; i < T.Edges.Len(); i ++ {
+	for i := 0; i < T.Edges.Len(); i++ {
 		f := T.Edges.At(i).(*quadratic.Edge)
 		if f.Start().Equal(e.Start().Point) && f.End().Equal(e.End().Point) {
 			return f.Face().Value.(string) == "active"
@@ -27,16 +27,16 @@ func EdgeStillActive(T *quadratic.Map, e *quadratic.Edge) bool {
 	return false
 }
 
-func chooseNextEdgeByGeneration(T *quadratic.Map) (*quadratic.Edge) {
+func chooseNextEdgeByGeneration(T *quadratic.Map) *quadratic.Edge {
 	ActiveFaces := new(vector.Vector)
 	onGeneration := -1
-	T.Faces.Do(func (F interface{}) {
+	T.Faces.Do(func(F interface{}) {
 		Fac := F.(*quadratic.Face)
-		if(Fac.Value.(string) != "active") {
+		if Fac.Value.(string) != "active" {
 			return
 		}
 		ActiveFaces.Push(Fac)
-		Fac.DoEdges(func (e *quadratic.Edge) {
+		Fac.DoEdges(func(e *quadratic.Edge) {
 			//fmt.Fprintf(os.Stderr,"edge generation: %v onGen: %v\n",e.Generation,onGeneration)
 			if onGeneration < 0 || e.Generation < onGeneration {
 				onGeneration = e.Generation
@@ -45,10 +45,10 @@ func chooseNextEdgeByGeneration(T *quadratic.Map) (*quadratic.Edge) {
 	})
 	activeEdges := new(generationOrderedEdges)
 
-	ActiveFaces.Do(func (F interface{}) {
+	ActiveFaces.Do(func(F interface{}) {
 		Fac := F.(*quadratic.Face)
-		Fac.DoEdges(func (e (*quadratic.Edge)) {
-			if (e.Generation != onGeneration) {
+		Fac.DoEdges(func(e (*quadratic.Edge)) {
+			if e.Generation != onGeneration {
 				return
 			}
 			activeEdges.Push(e)
@@ -59,15 +59,15 @@ func chooseNextEdgeByGeneration(T *quadratic.Map) (*quadratic.Edge) {
 	return activeEdges.At(0).(*quadratic.Edge)
 }
 
-func chooseNextEdgeByLocation(T *quadratic.Map) (*quadratic.Edge) {
+func chooseNextEdgeByLocation(T *quadratic.Map) *quadratic.Edge {
 	activeEdges := new(generationOrderedEdges)
 
-	T.Faces.Do(func (F interface{}) {
+	T.Faces.Do(func(F interface{}) {
 		Fac := F.(*quadratic.Face)
-		if(Fac.Value.(string) != "active") {
+		if Fac.Value.(string) != "active" {
 			return
 		}
-		Fac.DoEdges(func (e *quadratic.Edge) {
+		Fac.DoEdges(func(e *quadratic.Edge) {
 			activeEdges.Push(e)
 		})
 	})
