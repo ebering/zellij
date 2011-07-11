@@ -35,23 +35,42 @@ func init() {
 
 
 
-	Points["A"], _ = quadratic.PointFromString("-2,-2,2,0")
-	Points["B"], _ = quadratic.PointFromString("2,2,2,0")
-	Points["C"], _ = quadratic.PointFromString("-2,-2,-2,0")
+	Points["A"], _ = quadratic.PointFromString("-2,0,2,2")
+	Points["B"], _ = quadratic.PointFromString("2,0,2,2")
+	Points["C"], _ = quadratic.PointFromString("2,2,2,0")
 	Points["D"], _ = quadratic.PointFromString("2,2,-2,0")
+	Points["E"], _ = quadratic.PointFromString("2,0,-2,-2")
+	Points["F"], _ = quadratic.PointFromString("-2,0,-2,-2")
+	Points["G"], _ = quadratic.PointFromString("-2,-2,-2,0")
+	Points["H"], _ = quadratic.PointFromString("-2,-2,2,0")
+	Points["I"], _ = quadratic.PointFromString("-2,2,-2,2")
+	Points["J"], _ = quadratic.PointFromString("2,-2,-2,2")
+	Points["K"], _ = quadratic.PointFromString("2,-2,2,-2")
+	Points["L"], _ = quadratic.PointFromString("-2,2,2,-2")
+	Points["M"], _ = quadratic.PointFromString("6,-2,-2,0")
+	Points["N"], _ = quadratic.PointFromString("6,-2,2,0")
 
-	Tiles = make([]string,9 )
+	Tiles = make([]string,1)
 	Tiles[0] = "adehnrvuwtspjgbc"
-	Tiles[1] = "beovsi"
-	Tiles[2] = "jcehnrvt"
-	Tiles[3] = "jcehmrvt"
-	Tiles[4] = "cdhvtj"
-	Tiles[5] = "dBrh"
-	Tiles[6] = "Bnhe"
-	//Tiles[6] = "leov"
-	//Tiles[7] = "ibelvs"
-	Tiles[7] = "bcfdehmrvuqtspkg"
-	Tiles[8] = "bel"
+	//Tiles = append(Tiles,"beovsi")
+	Tiles = append(Tiles,"jcehnrvt")
+	Tiles = append(Tiles,"jcehmrvt")
+	//Tiles = append(Tiles,"cdhvtj")
+	//Tiles = append(Tiles,"dCrh")
+	Tiles = append(Tiles,"Cnhe")
+	Tiles = append(Tiles,"leov")
+	Tiles = append(Tiles,"ibelvs")
+	//Tiles = append(Tiles,"bcfdehmrvuqtspkg")
+	Tiles = append(Tiles,"bel")
+	//Tiles = append(Tiles,"jgkp")
+	//Tiles = append(Tiles,"kfmq")
+	//Tiles = append(Tiles,"AaBeCrpHb")
+	Tiles = append(Tiles,"pdCr")
+	Tiles = append(Tiles,"jcNmrvt")
+	Tiles = append(Tiles,"jcehmMt")
+	//Tiles = append(Tiles,"bcadIMuNkg")
+	//Tiles = append(Tiles,"AaBeCnDvEwFsGjHb")
+	Tiles = append(Tiles,"bcfderwtKpjg")
 
 	for _,t := range(Tiles) {
 		base := TileMap(t,0)
@@ -75,6 +94,22 @@ func init() {
 		leftRotate(9,5),
 		leftRotate(9,6),
 		leftRotate(9,7),
+		/*leftRotate(41,0),
+		leftRotate(41,1),
+		leftRotate(41,2),
+		leftRotate(41,3),
+		leftRotate(41,4),
+		leftRotate(41,5),
+		leftRotate(41,6),
+		leftRotate(41,7),*/
+		leftRotate(75,0),
+		leftRotate(75,1),
+		leftRotate(75,2),
+		leftRotate(75,3),
+		leftRotate(75,4),
+		leftRotate(75,5),
+		leftRotate(75,6),
+		leftRotate(75,7),
 		leftRotate(85,0),
 		leftRotate(85,1),
 		leftRotate(51,0),
