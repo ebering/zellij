@@ -3,32 +3,13 @@ package zellij
 import "../quadratic/quadratic"
 import "container/list"
 import "os"
-//import "fmt"
+import "fmt"
 
-func TileMap(s string,Generation int) *quadratic.Map {
-	tilePoints := make([]*quadratic.Point, len(s))
-	for i, c := range s {
-		tilePoints[i] = Points[string(c)].Copy()
-	}
-	tile := quadratic.PolygonMap(tilePoints)
-	tile.Edges.Do(func (f interface{}) {
-		f.(*quadratic.Edge).Generation = Generation
-	})
-	return tile
-}
-
-func PathMap(s string) *quadratic.Map {
-	tilePoints := make([]*quadratic.Point, len(s))
-	for i, c := range s {
-		tilePoints[i] = Points[string(c)].Copy()
-	}
-	return quadratic.PathMap(tilePoints)
-}
-
-func TileSkeleton(skeleton string,showIntermediate bool) (<-chan *quadratic.Map, chan<- int) {
+func TileSkeleton(skeleton string,showIntermediate bool) (<-chan *quadratic.Map, chan int) {
 	intermediateTilings := make(chan *list.List,1)
-	finalTilings := make(chan *quadratic.Map,1000)
-	halt := make(chan int,Workers)
+	finalTilings := make(chan *quadratic.Map,10000)
+	idleWorkers := make(chan int,1)
+	idleWorkers <-0
 	L := list.New()
 	skel,ok := SkeletonMap(skeleton)
 	if ok != nil {
@@ -41,16 +22,17 @@ func TileSkeleton(skeleton string,showIntermediate bool) (<-chan *quadratic.Map,
 		for j,r := range(TileMaps) {
 			localMaps[j] = r.Copy()
 		}
-		go tileWorker(intermediateTilings,finalTilings,halt,localMaps,chooseNextEdgeByLocation,0,showIntermediate)
+		go tileWorker(intermediateTilings,finalTilings,idleWorkers,localMaps,chooseNextEdgeByLocation,0,showIntermediate)
 	}
-	return finalTilings,halt
+	return finalTilings,idleWorkers
 }
 
-func TilePlane(maxtiles int,showIntermediate bool) (<-chan *quadratic.Map, chan<- int) {
+func TilePlane(maxtiles int,showIntermediate bool) (<-chan *quadratic.Map, chan int) {
 	//center := quadratic.NewPoint(xmax.Sub(xmin),ymax.Sub(ymin))
 	intermediateTilings := make(chan *list.List,1)
 	finalTilings := make(chan *quadratic.Map,1000)
-	halt := make(chan int,Workers)
+	idleWorkers := make(chan int,1)
+	idleWorkers <- 0
 	L := list.New()
 	L.PushBack(TileMap(Tiles[0],0))
 	L.Front().Value.(*quadratic.Map).Faces.Do(func (f interface{}) {
@@ -65,16 +47,37 @@ func TilePlane(maxtiles int,showIntermediate bool) (<-chan *quadratic.Map, chan<
 		for j,r := range(TileMaps) {
 			localMaps[j] = r.Copy()
 		}
-		go tileWorker(intermediateTilings,finalTilings,halt,localMaps,chooseNextEdgeByGeneration,maxtiles,showIntermediate)
+		go tileWorker(intermediateTilings,finalTilings,idleWorkers,localMaps,chooseNextEdgeByGeneration,maxtiles,showIntermediate)
 	}
-	return finalTilings,halt
+	return finalTilings,idleWorkers
 }
 	
-func tileWorker (source chan *list.List, sink chan<- *quadratic.Map, halt chan int, tileMaps []*quadratic.Map,chooseNextEdge func (*quadratic.Map) (*quadratic.Edge), maxtiles int,showIntermediate bool) {
+func tileWorker (source chan *list.List, sink chan<- *quadratic.Map, idleWorkers chan int, tileMaps []*quadratic.Map,chooseNextEdge func (*quadratic.Map) (*quadratic.Edge), maxtiles int,showIntermediate bool) {
+	idle := false
 	for {
 		select {
 			case L := <-source:
-				if L.Len() == 0 { source <- L; continue }
+				if L.Len() == 0 { 
+					source <- L 
+					if !idle {
+						iW := <-idleWorkers
+						idleWorkers <- iW+1
+					}
+					idle = true 
+				} else if idle {
+					iW := <-idleWorkers
+					idleWorkers <- iW-1
+					idle = false
+				}
+				iW := <-idleWorkers
+				if iW >= Workers {
+					idleWorkers <- iW
+					fmt.Fprintf(os.Stderr,"%v idle threads, we're done here\n",iW)
+					return
+				}
+				idleWorkers <- iW	
+				if idle { continue }
+				
 				T := L.Remove(L.Front()).(*quadratic.Map)
 				source <- L
 				if T.Faces.Len() > maxtiles && maxtiles > 0 {
@@ -91,9 +94,6 @@ func tileWorker (source chan *list.List, sink chan<- *quadratic.Map, halt chan i
 				L = <-source
 				L.PushFrontList(localSink)
 				source <- L
-			case <-halt:
-				halt <- 1
-				return
 		}
 	}
 }
