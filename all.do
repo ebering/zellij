@@ -1,1 +1,1 @@
-redo-ifchange main
+redo-ifchange interactive
