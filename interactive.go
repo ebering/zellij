@@ -100,8 +100,11 @@ func DrawSkel(w http.ResponseWriter, req *http.Request) {
 
 func StartTiling(w http.ResponseWriter, req *http.Request) {
 	if reset != nil {
-		<-reset
-		reset <- zellij.Workers + 1
+		select {
+			case <-reset:
+				reset <- 1
+			case reset <- 1:
+		}
 	}
 
 	tilingType := req.FormValue("type")

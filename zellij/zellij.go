@@ -9,102 +9,104 @@ import "fmt"
 var initializationTime int64
 
 func TileSkeleton(skeleton string, showIntermediate bool) (<-chan *quadratic.Map, chan int) {
-	intermediateTilings := make(chan *list.List, 1)
 	finalTilings := make(chan *quadratic.Map, 10000)
-	idleWorkers := make(chan int, 1)
-	idleWorkers <- 0
-	L := list.New()
+	halt := make(chan int, 1)
 	skel, ok := SkeletonMap(skeleton)
 	if ok != nil {
 		panic("Bad skeleton: " + ok.String() + "\n")
 	}
-	L.PushBack(skel)
-	intermediateTilings <- L
-	for i := 0; i < Workers; i++ {
-		localMaps := make([]*quadratic.Map, len(TileMaps))
-		for j, r := range TileMaps {
-			localMaps[j] = r.Copy()
-		}
-		go tileWorker(intermediateTilings, finalTilings, idleWorkers, localMaps, chooseNextEdgeByLocation, 0, showIntermediate)
-	}
+	go tileDriver(skel, finalTilings, halt, chooseNextEdgeByLocation, 0, showIntermediate)
 	initializationTime,_,_ = os.Time()
 	fmt.Fprintf(os.Stderr,"intitialized at %v\n",initializationTime)
-	return finalTilings, idleWorkers
+	return finalTilings, halt
 }
 
 func TilePlane(maxtiles int, showIntermediate bool) (<-chan *quadratic.Map, chan int) {
-	//center := quadratic.NewPoint(xmax.Sub(xmin),ymax.Sub(ymin))
-	intermediateTilings := make(chan *list.List, 1)
-	finalTilings := make(chan *quadratic.Map, 1000)
-	idleWorkers := make(chan int, 1)
-	idleWorkers <- 0
-	L := list.New()
-	L.PushBack(TileMap(Tiles[0], 0))
-	L.Front().Value.(*quadratic.Map).Faces.Do(func(f interface{}) {
-		F := f.(*quadratic.Face)
-		if F.Value.(string) == "outer" {
-			F.Value = "active"
-		}
-	})
-	intermediateTilings <- L
-	for i := 0; i < Workers; i++ {
-		localMaps := make([]*quadratic.Map, len(TileMaps))
-		for j, r := range TileMaps {
-			localMaps[j] = r.Copy()
-		}
-		go tileWorker(intermediateTilings, finalTilings, idleWorkers, localMaps, chooseNextEdgeByGeneration, maxtiles, showIntermediate)
-	}
+	finalTilings := make(chan *quadratic.Map, 10000)
+	halt := make(chan int, 1)
+	go tileDriver(TileMap("adehnrvuwtspjgbc",0), finalTilings, halt, chooseNextEdgeByLocation, maxtiles, showIntermediate)
 	initializationTime,_,_ = os.Time()
 	fmt.Fprintf(os.Stderr,"intitialized at %v\n",initializationTime)
-	return finalTilings, idleWorkers
+	return finalTilings, halt
 }
 
-func tileWorker(source chan *list.List, sink chan<- *quadratic.Map, idleWorkers chan int, tileMaps []*quadratic.Map, chooseNextEdge func(*quadratic.Map) *quadratic.Edge, maxtiles int, showIntermediate bool) {
-	idle := false
+func tileDriver(startTiling * quadratic.Map,sink chan<- *quadratic.Map,halt chan int, chooseNextEdge func(*quadratic.Map) *quadratic.Edge, maxtiles int, showIntermediate bool) {
+	alternativeStack := make(chan *list.List,1)
+	alternatives := new(list.List)
+	alternatives.PushBack(startTiling)
+	alternativeStack <- alternatives
+	workerCount := make(chan int,1)
+	workerCount <- 0
 	for {
-		L := <-source
-		iW := <-idleWorkers
-		if iW >= Workers {
-			idleWorkers <- iW
-			source <- L
-			fmt.Fprintf(os.Stderr, "%v idle threads, we're done here\n", iW)
-			return
-		} else if L.Len() == 0 {
-			if !idle {
-				idleWorkers <- iW + 1
-			} else {
-				idleWorkers <- iW
-			}
-			idle = true
-			source <- L
-			continue
-		} else if idle {
-			idleWorkers <- iW - 1
-			idle = false
-		} else {
-			idleWorkers <- iW
+		select {
+			case workers := <-workerCount:
+				alternatives = <-alternativeStack
+				if alternatives.Len() == 0 {
+					if (workers == 0) {
+						workerCount <- 0
+						halt <- 1
+						finishTime, _, _ := os.Time()
+						fmt.Fprintf(os.Stderr,"we're done, took %v seconds\n",finishTime-initializationTime)
+						return
+					}
+					alternativeStack <- alternatives
+					workerCount <- workers
+					continue
+				} else if workers < Workers {
+					T := alternatives.Remove(alternatives.Front()).(*quadratic.Map)
+					alternativeStack <- alternatives
+					localMaps := make([]*quadratic.Map, len(TileMaps))
+					for j, r := range TileMaps {
+						localMaps[j] = r.Copy()
+					}
+					workerCount <- workers + 1
+					go tileWorker(T, alternativeStack,sink,workerCount, halt, localMaps,chooseNextEdge,maxtiles,showIntermediate)
+				} else {
+					alternativeStack <- alternatives
+					workerCount <- workers
+				}
+			case <-halt:
+				halt <- 1
+				fmt.Fprintf(os.Stderr,"premature halt\n")
+				return
 		}
-
-		T := L.Remove(L.Front()).(*quadratic.Map)
-		source <- L
-		if T.Faces.Len() > maxtiles && maxtiles > 0 {
-			sink <- T
-			continue
-		} else if noActiveFaces(T) {
-			finishTime, _, _ := os.Time()
-			fmt.Fprintf(os.Stderr, "new tiling complete, took %v seconds\n",finishTime-initializationTime)
-			sink <- T
-			continue
-		} else if showIntermediate {
-			sink <- T
-		}
-		//fmt.Fprintf(os.Stderr,"currently have %v faces\n",T.Faces.Len())
-		localSink := addTilesByEdge(T, tileMaps, chooseNextEdge)
-		L = <-source
-		L.PushFrontList(localSink)
-		source <- L
-		//runtime.Gosched()
 	}
+}
+
+func tileWorker(T *quadratic.Map, alternativeStack chan *list.List, sink chan<- *quadratic.Map, workerCount chan int, halt chan int, tileMaps []*quadratic.Map, chooseNextEdge func(*quadratic.Map) *quadratic.Edge, maxtiles int, showIntermediate bool) {
+	localAlternatives := new(list.List)
+	Work: for {
+		select {
+			case <-halt:
+				halt <- 1
+				fmt.Fprintf(os.Stderr,"premature halt\n")
+				return
+			default:
+				if T.Faces.Len() > maxtiles && maxtiles > 0 {
+					sink <- T
+					break Work
+				} else if noActiveFaces(T) {
+					finishTime, _, _ := os.Time()
+					fmt.Fprintf(os.Stderr, "new tiling complete, took %v seconds\n",finishTime-initializationTime)
+					sink <- T
+					break Work
+				} else if showIntermediate {
+					sink <- T
+				}
+				alternatives := addTilesByEdge(T, tileMaps, chooseNextEdge)
+				if alternatives.Len() == 0 {
+					break Work
+				}
+				T = alternatives.Remove(alternatives.Front()).(*quadratic.Map)
+				localAlternatives.PushFrontList(alternatives)
+				//fmt.Fprintf(os.Stderr,"currently have %v faces\n",T.Faces.Len())
+		}
+	}
+	L := <-alternativeStack
+	L.PushFrontList(localAlternatives)
+	alternativeStack <- L
+	workers := <-workerCount
+	workerCount <- workers - 1
 }
 
 func Overlay(f interface{}, g interface{}) (interface{}, os.Error) {
