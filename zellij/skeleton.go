@@ -12,8 +12,8 @@ func SkeletonMap(spec string) (*quadratic.Map,os.Error) {
 	for _,d := range(strings.Split(spec,"",-1)) {
 		translatePoint := quadratic.PointMustFromString("8,4,0,0")
 		translateSaft := quadratic.PointMustFromString("4,2,0,0")
-		saft := TileMap(Tiles[1],0)
-		seal := TileMap(Tiles[0],0)
+		saft := TileMap("beovsi",0)
+		seal := TileMap("adehnrvuwtspjgbc",0)
 		heading,_ := strconv.Atoi(d)
 
 		seal.Translate(quadratic.NewVertex(origin),quadratic.NewVertex(currentPoint))
