@@ -4,6 +4,7 @@ import "../quadratic/quadratic"
 import "container/list"
 import "os"
 import "fmt"
+//import "runtime"
 
 func TileSkeleton(skeleton string, showIntermediate bool) (<-chan *quadratic.Map, chan int) {
 	intermediateTilings := make(chan *list.List, 1)
@@ -55,48 +56,47 @@ func TilePlane(maxtiles int, showIntermediate bool) (<-chan *quadratic.Map, chan
 func tileWorker(source chan *list.List, sink chan<- *quadratic.Map, idleWorkers chan int, tileMaps []*quadratic.Map, chooseNextEdge func(*quadratic.Map) *quadratic.Edge, maxtiles int, showIntermediate bool) {
 	idle := false
 	for {
-		select {
-		case L := <-source:
-			if L.Len() == 0 {
-				source <- L
-				if !idle {
-					iW := <-idleWorkers
-					idleWorkers <- iW + 1
-				}
-				idle = true
-			} else if idle {
-				iW := <-idleWorkers
-				idleWorkers <- iW - 1
-				idle = false
-			}
-			iW := <-idleWorkers
-			if iW >= Workers {
-				idleWorkers <- iW
-				fmt.Fprintf(os.Stderr, "%v idle threads, we're done here\n", iW)
-				return
-			}
+		L := <-source
+		iW := <-idleWorkers
+		if iW >= Workers {
 			idleWorkers <- iW
-			if idle {
-				continue
-			}
-
-			T := L.Remove(L.Front()).(*quadratic.Map)
 			source <- L
-			if T.Faces.Len() > maxtiles && maxtiles > 0 {
-				sink <- T
-				continue
-			} else if noActiveFaces(T) {
-				sink <- T
-				continue
-			} else if showIntermediate {
-				sink <- T
+			fmt.Fprintf(os.Stderr, "%v idle threads, we're done here\n", iW)
+			return
+		} else if L.Len() == 0 {
+			if !idle {
+				idleWorkers <- iW + 1
+			} else {
+				idleWorkers <- iW
 			}
-			//fmt.Fprintf(os.Stderr,"currently have %v faces\n",T.Faces.Len())
-			localSink := addTilesByEdge(T, tileMaps, chooseNextEdge)
-			L = <-source
-			L.PushFrontList(localSink)
+			idle = true
 			source <- L
+			continue
+		} else if idle {
+			idleWorkers <- iW - 1
+			idle = false
+		} else {
+			idleWorkers <- iW
 		}
+
+		T := L.Remove(L.Front()).(*quadratic.Map)
+		source <- L
+		if T.Faces.Len() > maxtiles && maxtiles > 0 {
+			sink <- T
+			continue
+		} else if noActiveFaces(T) {
+			fmt.Fprintf(os.Stderr, "new tiling complete\n")
+			sink <- T
+			continue
+		} else if showIntermediate {
+			sink <- T
+		}
+		//fmt.Fprintf(os.Stderr,"currently have %v faces\n",T.Faces.Len())
+		localSink := addTilesByEdge(T, tileMaps, chooseNextEdge)
+		L = <-source
+		L.PushFrontList(localSink)
+		source <- L
+		//runtime.Gosched()
 	}
 }
 
