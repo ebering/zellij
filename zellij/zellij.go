@@ -6,6 +6,8 @@ import "os"
 import "fmt"
 //import "runtime"
 
+var initializationTime int64
+
 func TileSkeleton(skeleton string, showIntermediate bool) (<-chan *quadratic.Map, chan int) {
 	intermediateTilings := make(chan *list.List, 1)
 	finalTilings := make(chan *quadratic.Map, 10000)
@@ -25,6 +27,8 @@ func TileSkeleton(skeleton string, showIntermediate bool) (<-chan *quadratic.Map
 		}
 		go tileWorker(intermediateTilings, finalTilings, idleWorkers, localMaps, chooseNextEdgeByLocation, 0, showIntermediate)
 	}
+	initializationTime,_,_ = os.Time()
+	fmt.Fprintf(os.Stderr,"intitialized at %v\n",initializationTime)
 	return finalTilings, idleWorkers
 }
 
@@ -50,6 +54,8 @@ func TilePlane(maxtiles int, showIntermediate bool) (<-chan *quadratic.Map, chan
 		}
 		go tileWorker(intermediateTilings, finalTilings, idleWorkers, localMaps, chooseNextEdgeByGeneration, maxtiles, showIntermediate)
 	}
+	initializationTime,_,_ = os.Time()
+	fmt.Fprintf(os.Stderr,"intitialized at %v\n",initializationTime)
 	return finalTilings, idleWorkers
 }
 
@@ -85,7 +91,8 @@ func tileWorker(source chan *list.List, sink chan<- *quadratic.Map, idleWorkers 
 			sink <- T
 			continue
 		} else if noActiveFaces(T) {
-			fmt.Fprintf(os.Stderr, "new tiling complete\n")
+			finishTime, _, _ := os.Time()
+			fmt.Fprintf(os.Stderr, "new tiling complete, took %v seconds\n",finishTime-initializationTime)
 			sink <- T
 			continue
 		} else if showIntermediate {
