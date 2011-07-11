@@ -50,23 +50,22 @@ func init() {
 
 	Tiles = make([]string, 1)
 	Tiles[0] = "adehnrvuwtspjgbc"
-	//Tiles = append(Tiles,"beovsi")
+	Tiles = append(Tiles,"beovsi")
 	Tiles = append(Tiles, "jcehnrvt")
 	Tiles = append(Tiles, "jcehmrvt")
-	//Tiles = append(Tiles,"cdhvtj")
-	//Tiles = append(Tiles,"dCrh")
+	Tiles = append(Tiles,"cdhvtj")
+	Tiles = append(Tiles,"dCrh")
 	Tiles = append(Tiles, "Cnhe")
-	Tiles = append(Tiles, "leov")
-	Tiles = append(Tiles, "ibelvs")
-	//Tiles = append(Tiles,"bcfdehmrvuqtspkg")
+	//Tiles = append(Tiles, "leov")
+	//Tiles = append(Tiles, "ibelvs")
+	Tiles = append(Tiles,"bcfdehmrvuqtspkg")
 	Tiles = append(Tiles, "bel")
 	//Tiles = append(Tiles,"jgkp")
 	//Tiles = append(Tiles,"kfmq")
 	//Tiles = append(Tiles,"AaBeCrpHb")
-	Tiles = append(Tiles, "pdCr")
+	//Tiles = append(Tiles, "pdCr")
 	Tiles = append(Tiles, "jcNmrvt")
 	Tiles = append(Tiles, "jcehmMt")
-	//Tiles = append(Tiles,"bcadIMuNkg")
 	//Tiles = append(Tiles,"AaBeCnDvEwFsGjHb")
 	Tiles = append(Tiles, "bcfderwtKpjg")
 
@@ -99,7 +98,7 @@ func init() {
 		leftRotate(41,4),
 		leftRotate(41,5),
 		leftRotate(41,6),
-		leftRotate(41,7),*/
+		leftRotate(41,7),
 		leftRotate(75, 0),
 		leftRotate(75, 1),
 		leftRotate(75, 2),
@@ -107,7 +106,7 @@ func init() {
 		leftRotate(75, 4),
 		leftRotate(75, 5),
 		leftRotate(75, 6),
-		leftRotate(75, 7),
+		leftRotate(75, 7),*/
 		leftRotate(85, 0),
 		leftRotate(85, 1),
 		leftRotate(51, 0),
