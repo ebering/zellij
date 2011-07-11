@@ -4,6 +4,7 @@ import "cairo"
 import "http"
 import "log"
 import "os"
+import "strconv"
 
 import "runtime"
 
@@ -12,19 +13,20 @@ import "./zellij/zellij"
 
 func init() {
 	runtime.GOMAXPROCS(3)
-	ZellijTilings,reset = zellij.TileSkeleton("00224466")
-	//ZellijTilings,reset = zellij.TilePlane()
+	zellij.Workers = 1
 }
 
 var ZellijTilings <-chan *quadratic.Map
-var reset chan<- int
+var reset chan int
+var CurrentTiling *quadratic.Map
 
 func main() {
 	http.HandleFunc("/",MainScreen)
 	http.HandleFunc("/start",StartTiling)
-	http.HandleFunc("/tiles",RenderTiles)
-	http.HandleFunc("/previewTiles",DrawTiles)
+	http.HandleFunc("/renderTiles",RenderTiles)
+	http.HandleFunc("/nextTiling",NextTiling)
 	http.HandleFunc("/previewSkeleton",DrawSkel)
+	http.HandleFunc("/emptySvg",EmptySvg)
 	err := http.ListenAndServe(":8080",nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ",err.String())
@@ -35,67 +37,43 @@ func MainScreen(w http.ResponseWriter, req *http.Request) {
 	http.ServeFile(w,req,"ui/ui.html")
 }
 
+func EmptySvg(w http.ResponseWriter, req *http.Request) {
+	http.ServeFile(w,req,"svg/empty.svg")
+}
+
+func NextTiling(w http.ResponseWriter, req *http.Request) {
+	CurrentTiling = <-ZellijTilings
+	RenderTiles(w,req)
+}
+
 func RenderTiles(w http.ResponseWriter, req *http.Request) {
 	e := os.Remove("svg/test-surface.svg")
 	if e != nil {
 		os.Stderr.WriteString(e.String()+"\n")
 	}	
-	
-	t := <-ZellijTilings
 
-	/*t := zellij.TileMap(zellij.Tiles[0],0)
-	u := zellij.TileMap(zellij.Tiles[3],0)
-	u.Translate(quadratic.NewVertex(zellij.Points["m"]),quadratic.NewVertex(zellij.Points["j"]))
-	u.RotatePi4(1)
+	if CurrentTiling == nil {
+		EmptySvg(w,req)
+		return
+	}
 	
-	v,ok := u.Overlay(u.Copy().RotatePi4(2),zellij.Overlay)
-	v,ok = v.Overlay(u.Copy().RotatePi4(4),zellij.Overlay)
-	v,ok = v.Overlay(u.Copy().RotatePi4(6),zellij.Overlay)
-	u = zellij.TileMap(zellij.Tiles[8],0)
-	u.Translate(quadratic.NewVertex(zellij.Points["l"]),quadratic.NewVertex(zellij.Points["a"]))
-	v,ok = v.Overlay(u,zellij.Overlay)
-	v,ok = v.Overlay(u.Copy().RotatePi4(2),zellij.Overlay)
-	v,ok = v.Overlay(u.Copy().RotatePi4(4),zellij.Overlay)
-	v,ok = v.Overlay(u.Copy().RotatePi4(6),zellij.Overlay)
-	v,ok = v.Overlay(t,zellij.Overlay)
-	if ok != nil {
-		os.Stderr.WriteString(ok.String()+"\n")
-	}
-	v,ok = v.Overlay(t.Translate(quadratic.NewVertex(zellij.Points["s"]),quadratic.NewVertex(zellij.Points["e"])),zellij.Overlay)
-	if ok != nil {
-		os.Stderr.WriteString(ok.String()+"\n")
-	}
-	t = v
-	if(zellij.LegalVertexFigures(t)) {
-		os.Stderr.WriteString("ok\n")
-	}*/
+	style := req.FormValue("style")
 	
 	image := cairo.NewSurface("svg/test-surface.svg",72*4,72*4)
 	image.SetSourceRGB(0.,0.,0.)
 	image.SetLineWidth(.1)
 	image.Translate(72*2.,72*2.)
 	image.Scale(4.,4.)
-	t.ColourFaces(image)
-	image.SetSourceRGBA(0.,0.,0.,1.)
-	t.DrawEdges(image)
-
-	image.Finish()
-	http.ServeFile(w,req,"svg/test-surface.svg")
-}
-
-func DrawTiles(w http.ResponseWriter, req *http.Request) {
-	e := os.Remove("svg/test-surface.svg")
-	if e != nil {
-		os.Stderr.WriteString(e.String()+"\n")
-	}	
-	image := cairo.NewSurface("svg/test-surface.svg",72*4,72*4)
-	image.SetSourceRGB(0.,0.,0.)
-	image.SetLineWidth(.1)
-	image.Translate(72*2.,72*2.)
-	image.Scale(4.,4.)
-	for _,t := range(zellij.TileMaps) {
-		t.ColourFaces(image)
+	if style == "edges" {
+		image.SetSourceRGBA(0.,0.,0.,1.)
+		CurrentTiling.DrawEdges(image)
+	} else if style == "plain" {
+		CurrentTiling.ColourFaces(image,zellij.PlainBrush)
+	} else {
+		CurrentTiling.ColourDebugFaces(image)
+		CurrentTiling.DrawDebugEdges(image)
 	}
+
 	image.Finish()
 	http.ServeFile(w,req,"svg/test-surface.svg")
 }
@@ -105,12 +83,13 @@ func DrawSkel(w http.ResponseWriter, req *http.Request) {
 	if e != nil {
 		os.Stderr.WriteString(e.String()+"\n")
 	}	
+	skeleton := req.FormValue("skeleton")
 	image := cairo.NewSurface("svg/test-surface.svg",72*4,72*4)
 	image.SetSourceRGB(0.,0.,0.)
 	image.SetLineWidth(.1)
 	image.Translate(72*2.,72*2.)
 	image.Scale(4.,4.)
-	skel,ok := zellij.SkeletonMap("0246")
+	skel,ok := zellij.SkeletonMap(skeleton)
 	if ok != nil {
 		os.Stderr.WriteString(ok.String()+"\n")
 	}
@@ -121,11 +100,31 @@ func DrawSkel(w http.ResponseWriter, req *http.Request) {
 
 func StartTiling(w http.ResponseWriter, req *http.Request) {
 	if reset != nil {
-		reset <- 1
+		<-reset
+		reset <- zellij.Workers+1
 	}
 
-	ZellijTilings,reset = zellij.TilePlane()
-	
-	w.WriteHeader(http.StatusOK)
+	tilingType := req.FormValue("type")
+
+	if(tilingType == "skeleton") {
+		skeleton := req.FormValue("skeleton")
+		showIntermediate,ok := strconv.Atob(req.FormValue("intermediate"))
+		if ok != nil || skeleton == "" {
+			w.WriteHeader(http.StatusNotFound)
+		}
+		ZellijTilings,reset = zellij.TileSkeleton(skeleton,showIntermediate)
+		w.WriteHeader(http.StatusOK)
+		return
+	} else if (tilingType == "plane") {
+		maxtiles,okm := strconv.Atoi(req.FormValue("maxtiles"))
+		showIntermediate,oks := strconv.Atob(req.FormValue("intermediate"))
+		if okm != nil || oks != nil || maxtiles == 0 {
+			w.WriteHeader(http.StatusNotFound)
+		}
+		ZellijTilings,reset = zellij.TilePlane(maxtiles,showIntermediate)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	w.WriteHeader(http.StatusNotFound)
 }
-	
