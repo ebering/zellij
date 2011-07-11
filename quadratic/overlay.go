@@ -296,11 +296,18 @@ func (m *Map) Overlay(n * Map,mergeFaces func(interface{},interface{}) (interfac
 			if ok !=nil {
 				return nil,ok
 			}
+			if mFace.Type != "" {
+				F.Type = mFace.Type
+			} else if nFace.Type != "" {
+				F.Type = nFace.Type
+			}
 			F.Value = v
 		} else if mFace != nil {
 			F.Value = mFace.Value
+			F.Type = mFace.Type
 		} else if nFace != nil {
 			F.Value = nFace.Value
+			F.Type = nFace.Type
 		} else {
 			panic(fmt.Sprintf("face didn't come from an mFace or an nFace, pointers m: %v n: %v o: %v face: %v",m,n,o,e.face))
 		}

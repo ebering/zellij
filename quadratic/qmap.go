@@ -123,6 +123,7 @@ type Face struct {
 	fromMap *Map
 	Value interface{}
 	copy *Face
+	Type string
 }
 
 func (f * Face) DoEdges(D func (*Edge) ()) {
@@ -283,6 +284,7 @@ func (m *Map) Copy() (* Map) {
 		G := new(Face)
 		G.fromMap = c
 		G.Value = F.Value
+		G.Type = F.Type
 		G.boundary = F.boundary.copy
 		F.copy = G
 		c.Faces.Push(G)
