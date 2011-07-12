@@ -1,5 +1,5 @@
 .redo
 *.6
 interactive
-svg
+svg/*.svg
 deprecated
