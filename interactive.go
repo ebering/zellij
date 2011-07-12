@@ -12,8 +12,8 @@ import "./quadratic/quadratic"
 import "./zellij/zellij"
 
 func init() {
-	runtime.GOMAXPROCS(3)
-	zellij.Workers = 1
+	runtime.GOMAXPROCS(24)
+	zellij.Workers = 23
 }
 
 var ZellijTilings <-chan *quadratic.Map
@@ -27,7 +27,7 @@ func main() {
 	http.HandleFunc("/nextTiling", NextTiling)
 	http.HandleFunc("/previewSkeleton", DrawSkel)
 	http.HandleFunc("/emptySvg", EmptySvg)
-	err := http.ListenAndServe(":8080", nil)
+	err := http.ListenAndServe(":10000", nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err.String())
 	}
@@ -38,7 +38,7 @@ func MainScreen(w http.ResponseWriter, req *http.Request) {
 }
 
 func EmptySvg(w http.ResponseWriter, req *http.Request) {
-	http.ServeFile(w, req, "svg/empty.svg")
+	http.ServeFile(w, req, "svg/empty")
 }
 
 func NextTiling(w http.ResponseWriter, req *http.Request) {
