@@ -81,6 +81,10 @@ func tileWorker(T *quadratic.Map, alternativeStack chan *list.List, sink chan<- 
 				halt <- 1
 				fmt.Fprintf(os.Stderr,"premature halt\n")
 				return
+			case L := <-alternativeStack:
+				L.PushFrontList(localAlternatives)
+				localAlternatives.Init()
+				alternativeStack <- L
 			default:
 				if T.Faces.Len() > maxtiles && maxtiles > 0 {
 					sink <- T
@@ -102,9 +106,6 @@ func tileWorker(T *quadratic.Map, alternativeStack chan *list.List, sink chan<- 
 				//fmt.Fprintf(os.Stderr,"currently have %v faces\n",T.Faces.Len())
 		}
 	}
-	L := <-alternativeStack
-	L.PushFrontList(localAlternatives)
-	alternativeStack <- L
 	workers := <-workerCount
 	workerCount <- workers - 1
 }
