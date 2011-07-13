@@ -22,6 +22,10 @@ func (i *Integer) Add(j *Integer) *Integer {
 	return &Integer{i.a + j.a, i.b + j.b}
 }
 
+func (i *Integer) Negation() *Integer {
+	return &Integer{ -i.a,-i.b}
+}
+
 func (i *Integer) Sub(j *Integer) *Integer {
 	return &Integer{i.a - j.a, i.b - j.b}
 }
@@ -31,6 +35,9 @@ func (i *Integer) Mul(j *Integer) *Integer {
 }
 
 func (i *Integer) MultR2On2() *Integer {
+	if i.a % 2 != 0 {
+		panic("cannot multiply a qint by root 2/2 if it isn't even")
+	}
 	return &Integer{i.b, i.a / 2}
 }
 

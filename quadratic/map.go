@@ -321,6 +321,14 @@ func (m *Map) RotatePi4(n int) *Map {
 	return m
 }
 
+func (m *Map) ReflectXAxis() *Map {
+	m.Verticies.Do(func(v interface{}) {
+		v.(*Vertex).ReflectXAxis()
+	})
+	m.Init()
+	return m
+}
+
 func (m *Map) makeAdjacencyMatrix() [][]bool {
 	mat := make([][]bool, m.Verticies.Len())
 	for i, _ := range mat {
@@ -366,6 +374,25 @@ func (m *Map) Isomorphic(n *Map) bool {
 	}
 
 	return true
+}
+
+func (m *Map) Centroid() *Point {
+	Xsum := new(Integer)
+	Ysum := new(Integer)
+	n := NewInteger(int64(m.Verticies.Len()),0)
+	for i:=0; i < m.Verticies.Len(); i++ {
+		v := m.Verticies.At(i).(*Vertex)
+		Xsum = Xsum.Add(v.x)
+		Ysum = Ysum.Add(v.y)
+	}
+	X,canX := Xsum.Div(n)
+	Y,canY := Ysum.Div(n)
+
+	if !canX || !canY {
+		panic("centroid not at a quadratic integer")
+	}
+
+	return NewPoint(X,Y)
 }
 
 func (m *Map) SetGeneration(g int) {

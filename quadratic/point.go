@@ -73,6 +73,10 @@ func (p *Point) RotatePi4(n int) {
 	}
 }
 
+func (p *Point) ReflectXAxis() {
+	p.y = p.y.Negation()
+}
+
 func PointFromString(ptstr string) (*Point, os.Error) {
 	re := regexp.MustCompile("(-?[0-9]+),(-?[0-9]+),(-?[0-9]+),(-?[0-9]+)")
 	matches := re.FindStringSubmatch(ptstr)
