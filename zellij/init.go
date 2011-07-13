@@ -71,7 +71,7 @@ func init() {
 
 	for _, t := range Tiles {
 		base := TileMap(t, 0)
-		TileMaps = append(TileMaps, GenerateOrbits(base)...)
+		TileMaps = append(TileMaps, GenerateOrbit(base)...)
 	}
 
 	VertexFigures = []byte{
