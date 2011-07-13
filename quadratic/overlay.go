@@ -176,6 +176,8 @@ func (m *Map) Overlay(n *Map, mergeFaces func(interface{}, interface{}) (interfa
 		nv := NewVertex(evt.point.Copy())
 		R.Do(func(r interface{}) {
 			nv.OutgoingEdges.Push(r.(*Edge).twin)
+			r.(*Edge).end = nv
+			r.(*Edge).twin.start = nv
 			o.Edges.Push(r)
 			o.Edges.Push(r.(*Edge).twin)
 		})
