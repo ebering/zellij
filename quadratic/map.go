@@ -376,6 +376,20 @@ func (m *Map) Isomorphic(n *Map) bool {
 	return true
 }
 
+func (m *Map) Equal(n *Map) bool {
+	ret := true
+	if !m.Isomorphic(n) {
+		return false
+	}
+	for i:=0; i < m.Verticies.Len(); i++ {
+		u := m.Verticies.At(i).(*Vertex)
+		v := n.Verticies.At(i).(*Vertex)
+		ret = ret && u.Equal(v.Point)
+	}
+	return ret
+}
+		
+
 func (m *Map) Centroid() *Point {
 	Xsum := new(Integer)
 	Ysum := new(Integer)
