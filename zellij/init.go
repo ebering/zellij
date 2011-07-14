@@ -57,13 +57,13 @@ func init() {
 	Tiles = append(Tiles,"dCrh")
 	Tiles = append(Tiles, "Cnhe")
 	//Tiles = append(Tiles, "leov")
-	//Tiles = append(Tiles, "ibelvs")
+	Tiles = append(Tiles, "ibelvs")
 	Tiles = append(Tiles,"bcfdehmrvuqtspkg")
 	Tiles = append(Tiles, "bel")
 	//Tiles = append(Tiles,"jgkp")
 	//Tiles = append(Tiles,"kfmq")
 	//Tiles = append(Tiles,"AaBeCrpHb")
-	//Tiles = append(Tiles, "pdCr")
+	Tiles = append(Tiles, "pdCr")
 	Tiles = append(Tiles, "jcNmrvt")
 	Tiles = append(Tiles, "jcehmMt")
 	//Tiles = append(Tiles,"AaBeCnDvEwFsGjHb")
@@ -71,7 +71,7 @@ func init() {
 
 	for _, t := range Tiles {
 		base := TileMap(t, 0)
-		TileMaps = append(TileMaps, GenerateOrbit(base)...)
+		TileMaps = append(TileMaps, GenerateOrbits(base)...)
 	}
 
 	VertexFigures = []byte{
