@@ -106,6 +106,11 @@ func tileWorker(T *quadratic.Map, alternativeStack chan *list.List, sink chan<- 
 				//fmt.Fprintf(os.Stderr,"currently have %v faces\n",T.Faces.Len())
 		}
 	}
+	L := <-alternativeStack
+	L.PushFrontList(localAlternatives)
+	localAlternatives.Init()
+	alternativeStack <- L
+
 	workers := <-workerCount
 	workerCount <- workers - 1
 }
