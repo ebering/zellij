@@ -47,6 +47,8 @@ func SkeletonMap(spec string) (*quadratic.Map, os.Error) {
 			f.(*quadratic.Face).Value = "active"
 		}
 	})
+	
+	ret.Translate(quadratic.NewVertex(ret.Centroid()),quadratic.NewVertex(quadratic.NewPoint(quadratic.Zero,quadratic.Zero)))
 
 	return ret, nil
 }
