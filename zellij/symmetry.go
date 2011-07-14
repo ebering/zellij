@@ -36,8 +36,8 @@ func GenerateOrbit(shape *quadratic.Map, symmetryGroup string) []*quadratic.Map 
 		}
 	}
 	if groupSymbol[0] == "d" {
-		shape = shape.Copy().ReflectXAxis()
-		for i := 1; i < rotOrder; i++ {
+		shape = orbit[0].Copy().ReflectXAxis()
+		for i := 0; i < rotOrder; i++ {
 			s := shape.Copy().RotatePi4(i*(8/rotOrder))
 			if !duplicateShape(orbit,s) {
 				orbit = append(orbit,s)
