@@ -29,16 +29,13 @@ func GenerateOrbit(shape *quadratic.Map, symmetryGroup string) []*quadratic.Map 
 		return orbit
 	}
 	rotOrder, _ := strconv.Atoi(groupSymbol[1])
-	for i := 1; i < rotOrder; i++ {
+	for i := 0; i < rotOrder; i++ {
 		s := shape.Copy().RotatePi4(i*(8/rotOrder))
 		if !duplicateShape(orbit,s) {
 			orbit = append(orbit,s)
 		}
-	}
-	if groupSymbol[0] == "d" {
-		shape = orbit[0].Copy().ReflectXAxis()
-		for i := 0; i < rotOrder; i++ {
-			s := shape.Copy().RotatePi4(i*(8/rotOrder))
+		if groupSymbol[0] == "d" {
+			s = s.Copy().ReflectXAxis()
 			if !duplicateShape(orbit,s) {
 				orbit = append(orbit,s)
 			}
