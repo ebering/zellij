@@ -14,7 +14,7 @@ function startTiling() {
 	var tilingType = typeSelect.options[typeSelect.selectedIndex].value
 	var skeleton = document.getElementById("skeleton").value
 	var showIntermediate = document.getElementById("showIntermediate").checked
-	callhome.open("GET","http://localhost:8080/start?type="+tilingType+"&skeleton="+skeleton+"&intermediate="+showIntermediate,true)
+	callhome.open("GET","http://localhost:10000/start?type="+tilingType+"&skeleton="+skeleton+"&intermediate="+showIntermediate,true)
 	callhome.send() 
 }
 
