@@ -4,3 +4,4 @@ interactive
 svg/*.svg
 deprecated
 *.png
+*.swp
