@@ -3,6 +3,7 @@ package quadratic
 import "os"
 import "regexp"
 
+// Verticies should be the boundary word of the Outer face.
 func PolygonMap(verts []*Point) *Map {
 	m := NewMap()
 	for _, pt := range verts {
