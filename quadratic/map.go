@@ -146,7 +146,9 @@ func (f *Face) Inner() bool {
 			e2 = e.(*Edge)
 		}
 	})
-	return e2.prev.Less(e2)
+	return ( e2.IntHeading() == 1 && e2.prev.IntHeading() == 6) ||
+		( e2.IntHeading() == 0 && (e2.prev.IntHeading() == 6 || e2.prev.IntHeading() == 5)) ||
+		( e2.IntHeading() == 7 && (e2.prev.IntHeading() == 6 || e2.prev.IntHeading() == 5 || e2.prev.IntHeading() == 4))
 }
 
 // Represents a planar map
@@ -324,6 +326,15 @@ func (m *Map) RotatePi4(n int) *Map {
 func (m *Map) ReflectXAxis() *Map {
 	m.Verticies.Do(func(v interface{}) {
 		v.(*Vertex).ReflectXAxis()
+	})
+	m.Edges.Do(func(f interface{}) {
+		e := f.(*Edge)
+		e.newFace = e.twin.face
+	})
+	m.Edges.Do(func(f interface{}) {
+		e := f.(*Edge)
+		e.face = e.newFace
+		e.newFace = nil
 	})
 	m.Init()
 	return m
