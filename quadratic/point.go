@@ -65,7 +65,7 @@ func MakeTranslation(from, to *Point) func(*Point) *Point {
 }
 
 func (p *Point) RotatePi4(n int) {
-	n = n%8 + 8
+	n = (n%8 + 8) %8
 
 	for i := 0; i < n; i++ {
 		p.x, p.y = p.x.MultR2On2().Sub(p.y.MultR2On2()),
