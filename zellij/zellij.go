@@ -4,7 +4,7 @@ import "../quadratic/quadratic"
 import "container/list"
 import "os"
 import "fmt"
-//import "runtime"
+import "runtime"
 
 var initializationTime int64
 
@@ -85,6 +85,7 @@ func tileWorker(T *quadratic.Map, alternativeStack chan *list.List, sink chan<- 
 				L.PushFrontList(localAlternatives)
 				localAlternatives.Init()
 				alternativeStack <- L
+				runtime.Gosched()
 			default:
 				if T.Faces.Len() > maxtiles && maxtiles > 0 {
 					sink <- T
