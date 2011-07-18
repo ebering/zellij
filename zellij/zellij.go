@@ -107,6 +107,11 @@ func tileWorker(T *quadratic.Map, alternativeStack chan *list.List, sink chan<- 
 				//fmt.Fprintf(os.Stderr,"currently have %v faces\n",T.Faces.Len())
 		}
 	}
+	L := <-alternativeStack
+	L.PushFrontList(localAlternatives)
+	localAlternatives.Init()
+	alternativeStack <- L
+
 	workers := <-workerCount
 	workerCount <- workers - 1
 }
@@ -136,9 +141,19 @@ func addTilesByEdge(T *quadratic.Map, tileMaps []*quadratic.Map, chooseNextEdge 
 				e.LengthSquared().Equal(f.LengthSquared()) &&
 				legalVertexFigure(vertexFigure(e.Start())|vertexFigure(f.Start())) &&
 				legalVertexFigure(vertexFigure(e.End())|vertexFigure(f.End())) {
-				Q, ok := T.Overlay(q.Copy().Translate(f.Start(), e.Start()), Overlay)
-				if ok == nil && Q != nil && LegalVertexFigures(Q) {
-					//fmt.Fprintf(os.Stderr,"adding %v to %v dup checks %v %v\n",f,e,duplicateTiling(sink,Q),duplicateTiling(oldSink,Q))
+				toLay := GenerateOrbit(q.Copy().Translate(f.Start(), e.Start()),"c4")
+				Q := T.Copy()
+				goodTiling := true
+				for _,o := range(toLay) {
+					var ok os.Error
+					Q, ok = Q.Overlay(o, Overlay)
+					if ok == nil && Q != nil && LegalVertexFigures(Q) {
+						continue
+					}
+					goodTiling = false
+					break
+				}
+				if goodTiling {
 					sink.PushBack(Q)
 				}
 			}

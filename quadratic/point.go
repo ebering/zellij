@@ -65,12 +65,16 @@ func MakeTranslation(from, to *Point) func(*Point) *Point {
 }
 
 func (p *Point) RotatePi4(n int) {
-	n = n%8 + 8
+	n = (n%8 + 8) %8
 
 	for i := 0; i < n; i++ {
 		p.x, p.y = p.x.MultR2On2().Sub(p.y.MultR2On2()),
 			p.y.MultR2On2().Add(p.x.MultR2On2())
 	}
+}
+
+func (p *Point) ReflectXAxis() {
+	p.y = p.y.Negation()
 }
 
 func PointFromString(ptstr string) (*Point, os.Error) {

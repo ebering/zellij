@@ -146,7 +146,9 @@ func (f *Face) Inner() bool {
 			e2 = e.(*Edge)
 		}
 	})
-	return e2.prev.Less(e2)
+	return ( e2.IntHeading() == 1 && e2.prev.IntHeading() == 6) ||
+		( e2.IntHeading() == 0 && (e2.prev.IntHeading() == 6 || e2.prev.IntHeading() == 5)) ||
+		( e2.IntHeading() == 7 && (e2.prev.IntHeading() == 6 || e2.prev.IntHeading() == 5 || e2.prev.IntHeading() == 4))
 }
 
 // Represents a planar map
@@ -321,6 +323,23 @@ func (m *Map) RotatePi4(n int) *Map {
 	return m
 }
 
+func (m *Map) ReflectXAxis() *Map {
+	m.Verticies.Do(func(v interface{}) {
+		v.(*Vertex).ReflectXAxis()
+	})
+	m.Edges.Do(func(f interface{}) {
+		e := f.(*Edge)
+		e.newFace = e.twin.face
+	})
+	m.Edges.Do(func(f interface{}) {
+		e := f.(*Edge)
+		e.face = e.newFace
+		e.newFace = nil
+	})
+	m.Init()
+	return m
+}
+
 func (m *Map) makeAdjacencyMatrix() [][]bool {
 	mat := make([][]bool, m.Verticies.Len())
 	for i, _ := range mat {
@@ -366,6 +385,39 @@ func (m *Map) Isomorphic(n *Map) bool {
 	}
 
 	return true
+}
+
+func (m *Map) Equal(n *Map) bool {
+	ret := true
+	if !m.Isomorphic(n) {
+		return false
+	}
+	for i:=0; i < m.Verticies.Len(); i++ {
+		u := m.Verticies.At(i).(*Vertex)
+		v := n.Verticies.At(i).(*Vertex)
+		ret = ret && u.Equal(v.Point)
+	}
+	return ret
+}
+		
+
+func (m *Map) Centroid() *Point {
+	Xsum := new(Integer)
+	Ysum := new(Integer)
+	n := NewInteger(int64(m.Verticies.Len()),0)
+	for i:=0; i < m.Verticies.Len(); i++ {
+		v := m.Verticies.At(i).(*Vertex)
+		Xsum = Xsum.Add(v.x)
+		Ysum = Ysum.Add(v.y)
+	}
+	X,canX := Xsum.Div(n)
+	Y,canY := Ysum.Div(n)
+
+	if !canX || !canY {
+		panic("centroid not at a quadratic integer")
+	}
+
+	return NewPoint(X,Y)
 }
 
 func (m *Map) SetGeneration(g int) {
