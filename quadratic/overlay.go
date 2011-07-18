@@ -209,6 +209,7 @@ func (m *Map) Overlay(n *Map, mergeFaces func(interface{}, interface{}) (interfa
 				nv.OutgoingEdges.Do(func(e interface{}) {
 					onface = onface || e.(*Edge).face == sb.face || e.(*Edge).newFace == sb.face
 				})
+				onface = onface || sa.end.Equal(evt.point) || sb.end.Equal(evt.point)
 				if !onface {
 					//fmt.Fprintf(os.Stderr,"Vertex %v in face %v from map %p\n",nv,sb.face.Value,)
 					nv.inFace = sb.face
