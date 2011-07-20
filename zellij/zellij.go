@@ -4,7 +4,6 @@ import "../quadratic/quadratic"
 import "container/list"
 import "os"
 import "fmt"
-import "runtime"
 
 var initializationTime int64
 
@@ -85,7 +84,6 @@ func tileWorker(T *quadratic.Map, alternativeStack chan *list.List, sink chan<- 
 				L.PushFrontList(localAlternatives)
 				localAlternatives.Init()
 				alternativeStack <- L
-				runtime.Gosched()
 			default:
 				if T.Faces.Len() > maxtiles && maxtiles > 0 {
 					sink <- T
@@ -141,7 +139,7 @@ func addTilesByEdge(T *quadratic.Map, tileMaps []*quadratic.Map, chooseNextEdge 
 				e.LengthSquared().Equal(f.LengthSquared()) &&
 				legalVertexFigure(vertexFigure(e.Start())|vertexFigure(f.Start())) &&
 				legalVertexFigure(vertexFigure(e.End())|vertexFigure(f.End())) {
-				toLay := GenerateOrbit(q.Copy().Translate(f.Start(), e.Start()),"c4")
+				toLay := GenerateOrbit(q.Copy().Translate(f.Start(), e.Start()),"d4")
 				Q := T.Copy()
 				goodTiling := true
 				for _,o := range(toLay) {
