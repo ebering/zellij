@@ -40,6 +40,7 @@ type Edge struct {
 	visited          bool
 	Generation       int
 	copy             *Edge //used only in the copy routine
+	fromMap *Map // pointer back to the map we're in
 }
 
 func (e *Edge) Start() *Vertex {
@@ -163,6 +164,9 @@ func (m *Map) Init() {
 	})
 	sort.Sort(m.Verticies)
 	m.adjacencyMatrix = m.makeAdjacencyMatrix()
+	m.Edges.Do(func (e interface{}) {
+		e.(*Edge).fromMap = m
+	})
 }
 
 func NewMap() *Map {
@@ -262,6 +266,7 @@ func (m *Map) JoinVerticies(u *Vertex, v *Vertex) *Edge {
 	e, eTwin := NewEdgePair(u, v)
 	m.Edges.Push(e)
 	m.Edges.Push(eTwin)
+	e.fromMap,eTwin.fromMap = m,m
 	return e
 }
 
