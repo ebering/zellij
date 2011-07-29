@@ -50,13 +50,13 @@ func init() {
 
 	Tiles = make([]string, 1)
 	Tiles[0] = "adehnrvuwtspjgbc"
-	Tiles = append(Tiles,"AaBeCnDvEwFsGjHb")
+	Tiles = append(Tiles, "Cnhe")
 	Tiles = append(Tiles,"beovsi")
+	Tiles = append(Tiles,"AaBeCnDvEwFsGjHb")
 	Tiles = append(Tiles, "jcehnrvt")
 	Tiles = append(Tiles, "jcehmrvt")
 	Tiles = append(Tiles,"cdhvtj")
 	Tiles = append(Tiles,"dCrh")
-	Tiles = append(Tiles, "Cnhe")
 	//Tiles = append(Tiles, "leov")
 	Tiles = append(Tiles, "ibelvs")
 	Tiles = append(Tiles,"bcfdehmrvuqtspkg")
