@@ -50,6 +50,7 @@ func init() {
 
 	Tiles = make([]string, 1)
 	Tiles[0] = "adehnrvuwtspjgbc"
+	Tiles = append(Tiles,"AaBeCnDvEwFsGjHb")
 	Tiles = append(Tiles,"beovsi")
 	Tiles = append(Tiles, "jcehnrvt")
 	Tiles = append(Tiles, "jcehmrvt")
@@ -66,7 +67,6 @@ func init() {
 	Tiles = append(Tiles, "pdCr")
 	Tiles = append(Tiles, "jcNmrvt")
 	Tiles = append(Tiles, "jcehmMt")
-	//Tiles = append(Tiles,"AaBeCnDvEwFsGjHb")
 	Tiles = append(Tiles, "bcfderwtKpjg")
 
 	for _, t := range Tiles {
