@@ -106,6 +106,8 @@ func (m *Map) Overlay(n *Map, mergeFaces func(interface{}, interface{}) (interfa
 			if L.At(i).(*Edge).Equal(L.At(i + 1).(*Edge)) {
 				L.At(i).(*Edge).newFace = L.At(i + 1).(*Edge).face
 				L.At(i).(*Edge).twin.newFace = L.At(i + 1).(*Edge).twin.face
+				L.At(i).(*Edge).fromMap = nil //no longer from a unique map
+				L.At(i).(*Edge).twin.fromMap = nil //no longer from a unique map
 				L.Delete(i + 1)
 			} else {
 				i++
@@ -197,26 +199,68 @@ func (m *Map) Overlay(n *Map, mergeFaces func(interface{}, interface{}) (interfa
 			f.twin.next = e
 		}
 
-		// Setting up nv's inFace
-		// Vertical lines make this shit go tits up. 
-		above := sort.Search(T.Len(), func(i int) bool {
-			return T.segments.At(i).(*Edge).Line().Below(evt.point)
+		// Setting up nv's inFace.
+		// A new vertex only has relevant inFace information when it comes exclusively from one map, we first determine that
+		fromOneMap := true
+		fromMap := nv.OutgoingEdges.At(0).(*Edge).fromMap
+		nv.OutgoingEdges.Do(func(e interface{}) {
+			fromOneMap = fromOneMap && e.(*Edge).fromMap == fromMap && e.(*Edge).fromMap != nil
 		})
-		if 0 < above && above < T.Len() {
-			//fmt.Fprintf(os.Stderr,"Testing status point, looking for vertex in face. above: %v, Len: %v\n",above,T.Len())
-			sa := T.segments.At(above).(*Edge)
-			sb := T.segments.At(above - 1).(*Edge)
-			if sa.twin.face == sb.face {
-				onface := false
-				nv.OutgoingEdges.Do(func(e interface{}) {
-					onface = onface || e.(*Edge).face == sb.face || e.(*Edge).newFace == sb.face
-				})
-				onface = onface || sa.end.Equal(evt.point) || sb.end.Equal(evt.point)
-				if !onface {
-					//fmt.Fprintf(os.Stderr,"Vertex %v in face %v from map %p\n",nv,sb.face.Value,)
+		// we're from one map, got to find the elements in T from the other map above and below us
+		if fromOneMap {
+			//fmt.Fprintf(os.Stderr,"from one map, finding face of other\n")
+			TfromOtherMap := new(sweepStatus)
+			TfromOtherMap.sweepLocation = evt.point
+			TfromOtherMap.segments = new(vector.Vector)
+			T.segments.Do(func(e interface{}) {
+				if e.(*Edge).fromMap != fromMap {
+					TfromOtherMap.segments.Push(e)
+				}
+			})
+			sort.Sort(TfromOtherMap)
+			above := sort.Search(TfromOtherMap.Len(), func(i int) bool {
+				return TfromOtherMap.segments.At(i).(*Edge).Line().Below(evt.point)
+			})
+			if 0 < above && above < TfromOtherMap.Len() {
+				//fmt.Fprintf(os.Stderr,"Testing status point, looking for vertex in face. above: %v, Len: %v\n",above,TfromOtherMap.Len())
+				sb := TfromOtherMap.segments.At(above - 1).(*Edge)
+				if sb.fromMap == nil {
+					if sb.face.fromMap == fromMap {
+						nv.inFace = sb.newFace
+					} else { 
+						nv.inFace = sb.face
+					}
+				} else {
 					nv.inFace = sb.face
 				}
-			}
+			} else if TfromOtherMap.Len() == 0 {
+				nv.inFace = nil // completely outside other map, not our problem
+			} else if above == 0 {
+				sa := TfromOtherMap.segments.At(above).(*Edge)
+				if sa.twin.fromMap == nil {
+					if sa.twin.face.fromMap == fromMap {
+						nv.inFace = sa.twin.newFace
+					} else { 
+						nv.inFace = sa.twin.face
+					}
+				} else {
+					nv.inFace = sa.twin.face
+				}
+			} else if above == TfromOtherMap.Len() {
+				sb := TfromOtherMap.segments.At(above - 1).(*Edge)
+				nv.inFace = sb.face
+				if sb.fromMap == nil {
+					if sb.face.fromMap == fromMap {
+						nv.inFace = sb.newFace
+					} else { 
+						nv.inFace = sb.face
+					}
+				} else {
+					nv.inFace = sb.face
+				}
+			} 
+		} else {
+			nv.inFace = nil //we're not from one map, this vertex happens at the overlay, edges have complete face information.
 		}
 
 		o.Verticies.Push(nv)
