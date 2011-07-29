@@ -95,6 +95,15 @@ func (l *Line) LessAt(m *Line, p *Point) bool {
 	rhs := l.deltax.Mul(m.deltay.Mul(p.x.Sub(m.start.x)).Add(m.start.y.Mul(m.deltax)))
 	//fmt.Fprintf(os.Stderr," by general case: %v\n",lhs.Less(rhs))
 	//fmt.Fprintf(os.Stderr,"lhs: %v rhs: %v\n",lhs,rhs)
+	
+	// p on the same vertical line as an intersection of l and m. Go by end point y unless overlap is at endpoint, in which case go by start point y
+	if lhs.Equal(rhs) {
+		if l.end.Equal(m.end) {
+			return l.start.y.Less(m.start.y)
+		} else {
+			return l.end.y.Less(m.end.y)
+		}
+	}
 	return lhs.Less(rhs)
 }
 
