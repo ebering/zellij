@@ -46,6 +46,7 @@ func tileDriver(startTiling * quadratic.Map,sink chan<- *quadratic.Map,halt chan
 						halt <- 1
 						finishTime, _, _ := os.Time()
 						fmt.Fprintf(os.Stderr,"we're done, took %v seconds\n",finishTime-initializationTime)
+						close(sink)
 						return
 					}
 					alternativeStack <- alternatives
