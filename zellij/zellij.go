@@ -7,29 +7,29 @@ import "fmt"
 
 var initializationTime int64
 
-func TileSkeleton(skeleton string, showIntermediate bool) (<-chan *quadratic.Map, chan int) {
+func TileSkeleton(skeleton, tileSymmetry string, showIntermediate bool) (<-chan *quadratic.Map, chan int) {
 	finalTilings := make(chan *quadratic.Map, 10000)
 	halt := make(chan int, 1)
 	skel, ok := SkeletonMap(skeleton)
 	if ok != nil {
 		panic("Bad skeleton: " + ok.String() + "\n")
 	}
-	go tileDriver(skel, finalTilings, halt, chooseNextEdgeByLocation, 0, showIntermediate)
+	go tileDriver(skel, finalTilings, halt, chooseNextEdgeByLocation, 0, tileSymmetry, showIntermediate)
 	initializationTime,_,_ = os.Time()
 	fmt.Fprintf(os.Stderr,"intitialized at %v\n",initializationTime)
 	return finalTilings, halt
 }
 
-func TilePlane(maxtiles int, showIntermediate bool) (<-chan *quadratic.Map, chan int) {
+func TilePlane(maxtiles int, tileSymmetry string, showIntermediate bool) (<-chan *quadratic.Map, chan int) {
 	finalTilings := make(chan *quadratic.Map, 10000)
 	halt := make(chan int, 1)
-	go tileDriver(TileMap("adehnrvuwtspjgbc",0), finalTilings, halt, chooseNextEdgeByLocation, maxtiles, showIntermediate)
+	go tileDriver(TileMap("adehnrvuwtspjgbc",0), finalTilings, halt, chooseNextEdgeByLocation, maxtiles, tileSymmetry, showIntermediate)
 	initializationTime,_,_ = os.Time()
 	fmt.Fprintf(os.Stderr,"intitialized at %v\n",initializationTime)
 	return finalTilings, halt
 }
 
-func tileDriver(startTiling * quadratic.Map,sink chan<- *quadratic.Map,halt chan int, chooseNextEdge func(*quadratic.Map) *quadratic.Edge, maxtiles int, showIntermediate bool) {
+func tileDriver(startTiling * quadratic.Map,sink chan<- *quadratic.Map,halt chan int, chooseNextEdge func(*quadratic.Map) *quadratic.Edge, maxtiles int, tileSymmetry string, showIntermediate bool) {
 	alternativeStack := make(chan *list.List,1)
 	alternatives := new(list.List)
 	alternatives.PushBack(startTiling)
@@ -59,7 +59,7 @@ func tileDriver(startTiling * quadratic.Map,sink chan<- *quadratic.Map,halt chan
 						localMaps[j] = r.Copy()
 					}
 					workerCount <- workers + 1
-					go tileWorker(T, alternativeStack,sink,workerCount, halt, localMaps,chooseNextEdge,maxtiles,showIntermediate)
+					go tileWorker(T, alternativeStack,sink,workerCount, halt, localMaps,chooseNextEdge,maxtiles,tileSymmetry,showIntermediate)
 				} else {
 					alternativeStack <- alternatives
 					workerCount <- workers
@@ -72,7 +72,7 @@ func tileDriver(startTiling * quadratic.Map,sink chan<- *quadratic.Map,halt chan
 	}
 }
 
-func tileWorker(T *quadratic.Map, alternativeStack chan *list.List, sink chan<- *quadratic.Map, workerCount chan int, halt chan int, tileMaps []*quadratic.Map, chooseNextEdge func(*quadratic.Map) *quadratic.Edge, maxtiles int, showIntermediate bool) {
+func tileWorker(T *quadratic.Map, alternativeStack chan *list.List, sink chan<- *quadratic.Map, workerCount chan int, halt chan int, tileMaps []*quadratic.Map, chooseNextEdge func(*quadratic.Map) *quadratic.Edge, maxtiles int, tileSymmetry string, showIntermediate bool) {
 	localAlternatives := new(list.List)
 	Work: for {
 		select {
@@ -96,7 +96,7 @@ func tileWorker(T *quadratic.Map, alternativeStack chan *list.List, sink chan<- 
 				} else if showIntermediate {
 					sink <- T
 				}
-				alternatives := addTilesByEdge(T, tileMaps, chooseNextEdge)
+				alternatives := addTilesByEdge(T, tileMaps, chooseNextEdge, tileSymmetry)
 				if alternatives.Len() == 0 {
 					break Work
 				}
@@ -125,7 +125,7 @@ func Overlay(f interface{}, g interface{}) (interface{}, os.Error) {
 	return "outer", nil
 }
 
-func addTilesByEdge(T *quadratic.Map, tileMaps []*quadratic.Map, chooseNextEdge func(*quadratic.Map) *quadratic.Edge) *list.List {
+func addTilesByEdge(T *quadratic.Map, tileMaps []*quadratic.Map, chooseNextEdge func(*quadratic.Map) *quadratic.Edge, tileSymmetry string) *list.List {
 	e := chooseNextEdge(T)
 	onGeneration := e.Generation
 	sink := new(list.List)
@@ -139,7 +139,7 @@ func addTilesByEdge(T *quadratic.Map, tileMaps []*quadratic.Map, chooseNextEdge 
 				e.LengthSquared().Equal(f.LengthSquared()) &&
 				legalVertexFigure(vertexFigure(e.Start())|vertexFigure(f.Start())) &&
 				legalVertexFigure(vertexFigure(e.End())|vertexFigure(f.End())) {
-				toLay := GenerateOrbit(q.Copy().Translate(f.Start(), e.Start()),"d4")
+				toLay := GenerateOrbit(q.Copy().Translate(f.Start(), e.Start()),tileSymmetry)
 				Q := T.Copy()
 				goodTiling := true
 				for _,o := range(toLay) {

@@ -12,8 +12,8 @@ import "./quadratic/quadratic"
 import "./zellij/zellij"
 
 func init() {
-	runtime.GOMAXPROCS(24)
-	zellij.Workers = 23
+	runtime.GOMAXPROCS(4)
+	zellij.Workers = 2
 }
 
 var ZellijTilings <-chan *quadratic.Map
@@ -108,6 +108,7 @@ func StartTiling(w http.ResponseWriter, req *http.Request) {
 	}
 
 	tilingType := req.FormValue("type")
+	tileSymmetry := req.FormValue("symmetry")
 
 	if tilingType == "skeleton" {
 		skeleton := req.FormValue("skeleton")
@@ -115,7 +116,7 @@ func StartTiling(w http.ResponseWriter, req *http.Request) {
 		if ok != nil || skeleton == "" {
 			w.WriteHeader(http.StatusNotFound)
 		}
-		ZellijTilings, reset = zellij.TileSkeleton(skeleton, showIntermediate)
+		ZellijTilings, reset = zellij.TileSkeleton(skeleton, tileSymmetry, showIntermediate)
 		w.WriteHeader(http.StatusOK)
 		return
 	} else if tilingType == "plane" {
@@ -124,7 +125,7 @@ func StartTiling(w http.ResponseWriter, req *http.Request) {
 		if okm != nil || oks != nil || maxtiles == 0 {
 			w.WriteHeader(http.StatusNotFound)
 		}
-		ZellijTilings, reset = zellij.TilePlane(maxtiles, showIntermediate)
+		ZellijTilings, reset = zellij.TilePlane(maxtiles, tileSymmetry, showIntermediate)
 		w.WriteHeader(http.StatusOK)
 		return
 	}
