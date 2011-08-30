@@ -167,6 +167,9 @@ func (m *Map) Init() {
 	m.Edges.Do(func (e interface{}) {
 		e.(*Edge).fromMap = m
 	})
+	m.Faces.Do(func (f interface{}) {
+		f.(*Face).fromMap = m
+	})
 }
 
 func NewMap() *Map {
