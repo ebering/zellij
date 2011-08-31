@@ -1,0 +1,219 @@
+<html>
+<head>
+<title>Zellij Skeleton Designer</title>
+
+<script type="text/javascript">
+
+var Skeleton
+var ctx
+
+function integer(a,b) {
+	this.a = a
+	this.b = b
+
+	this.Add = function(j) {
+		return new integer(this.a+j.a,this.b+j.b)
+	}
+
+	this.Sub = function(j) {
+		return new integer(this.a-j.a,this.b-j.b)
+	}
+
+	this.MultR2On2 = function() {
+		return new integer(this.b,this.a/2)
+	}
+
+	this.Num = function() {
+		return this.a+Math.sqrt(2)*this.b
+	}
+
+	this.Copy = function() {
+		return new integer(this.a,this.b)
+	}
+
+	this.Equal = function(j) {
+		return this.a == j.a && this.b == j.b
+	}
+}
+
+function point(x,y) {
+	this.x = x
+	this.y = y
+
+	this.Copy = function() {
+		return new point(this.x.Copy(),this.y.Copy())
+	}
+
+	this.Translate = function (dir) {
+		var vec =  new point(new integer(1,0),new integer(0,0))
+		vec.RotatePi4(dir)
+		var rv = this.Copy() 
+		rv.Add(vec)
+		return rv
+	}
+	
+	this.RotatePi4 = function(n) {
+		var n = (n%8+8)%8
+
+		for(var i = 0; i < n; i++) {
+			var rx = this.x.MultR2On2().Sub(this.y.MultR2On2())
+			var ry = this.y.MultR2On2().Add(this.x.MultR2On2())
+			this.x = rx
+			this.y = ry
+		}
+	}
+
+	this.Add = function(vec) {
+		this.x = this.x.Add(vec.x)
+		this.y = this.y.Add(vec.y)
+	}
+
+	this.Equal = function(pt) {
+		return this.x.Equal(pt.x) && this.y.Equal(pt.y)
+	}
+}
+
+function edge(a,b) {
+	this.a = a
+	this.b = b
+
+	this.Equal = function(e) {
+		return (this.a == e.a && this.b == e.b) || (this.a == e.b && this.b == e.a)
+	}
+}
+
+function skeleton() {
+	this.Verticies = new Array()
+	this.Verticies[0] = new point(new integer(0,0),new integer(0,0))
+	this.Edges = new Array()
+	this.CurrentVertex = 0
+
+	this.NewEdge = false
+	this.NewVert = false
+	this.OldVertex = 0
+
+	this.Move = function (dir) {
+		var vtx = this.Verticies[this.CurrentVertex]
+		var nv = vtx.Translate(dir)
+		for (var i = 0; i < this.Verticies.length; i++) {
+			if(this.Verticies[i].Equal(nv)) {
+				ne = new edge(this.CurrentVertex,i)
+				this.CurrentVertex = i
+				for( var j = 0; j < this.Edges.length; j++ ) {
+					if(this.Edges[j].Equal(ne)) {
+						this.NewEdge = false
+						this.NewVert = false
+						return
+					}
+				}
+				this.Edges.push(ne)
+				this.NewEdge = true
+				this.NewVert = false
+				return
+			}
+		}
+
+		this.OldVertex = this.CurrentVertex
+		var nvi = this.Verticies.push(nv) - 1
+		this.Edges.push(new edge(this.CurrentVertex,nvi))
+		this.NewVert = true
+		this.NewEdge = true
+		this.CurrentVertex = nvi
+	}
+
+	this.Undo = function() {
+		if (this.NewEdge) {
+			this.Edges.pop()
+			this.NewEdge = false
+		}
+		if (this.NewVert) {
+			this.Verticies.pop()
+			this.NewVert = false
+			this.CurrentVertex = this.OldVertex
+		}
+	}
+
+	this.Draw = function (ctx) {
+		for (var i = 0; i < this.Edges.length; i++ ){
+			var st = this.Verticies[this.Edges[i].a]
+			var en = this.Verticies[this.Edges[i].b]
+			ctx.beginPath()
+			ctx.moveTo(st.x.Num(),st.y.Num())
+			ctx.lineTo(en.x.Num(),en.y.Num())
+			ctx.stroke()
+		}
+		for (var i = 0; i < this.Verticies.length; i++ ){
+			ctx.beginPath()
+			ctx.arc(this.Verticies[i].x.Num(),this.Verticies[i].y.Num(),.2,0,2*Math.PI)
+			if (this.CurrentVertex == i) {
+				ctx.fillStyle = "#FF0000"
+			} else {
+				ctx.fillStyle = "#000000"
+			}
+			ctx.fill()
+		}
+	}
+}
+
+function updateSkeleton(evt) {
+	switch (evt.which) {
+		case 90:
+			Skeleton.Undo()
+			break
+		case 97:
+			Skeleton.Move(3)
+			break
+		case 98:
+			Skeleton.Move(2)
+			break
+		case 99:
+			Skeleton.Move(1)
+			break
+		case 100:
+			Skeleton.Move(4)
+			break
+		case 102:
+			Skeleton.Move(0)
+			break
+		case 103:
+			Skeleton.Move(5)
+			break
+		case 104:
+			Skeleton.Move(6)
+			break
+		case 105:
+			Skeleton.Move(7)
+			break
+		default:
+			break
+	}
+	ctx.save()
+	ctx.setTransform(1,0,0,1,0,0)
+	ctx.clearRect(0,0,400,400)
+	ctx.restore()
+	Skeleton.Draw(ctx)
+	document.getElementById("debug1").value = Skeleton.Verticies.length
+	document.getElementById("debug2").value = Skeleton.Edges.length
+
+}
+
+function init() {
+	Skeleton = new skeleton()
+	ctx = document.getElementById("skeletonDesign").getContext("2d")
+	ctx.translate(200,200)
+	ctx.scale(10,10)
+	ctx.lineWidth = .1
+}
+
+</script>
+
+</head>
+<html>
+<body onload="init()"  onkeyup="updateSkeleton(event)"  >
+<input type="text" id="debug1" /><br/>
+<input type="text" id="debug2" /><br/>
+<input type="text" id="debug3" /><br/>
+<input type="text" id="debug4" /><br/>
+<canvas id="skeletonDesign" width="400" height="400"/>
+</body>
+</html>
