@@ -156,7 +156,11 @@ function skeleton() {
 }
 
 function updateSkeleton(evt) {
-	switch (evt.which) {
+	var key = evt.which
+	if( 48 <= evt.which && evt.which <= 57) {
+		key += 48
+	}
+	switch (key) {
 		case 90:
 			Skeleton.Undo()
 			break
