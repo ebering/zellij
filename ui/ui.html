@@ -13,8 +13,10 @@ function startTiling() {
 	var typeSelect = document.getElementById("tilingType")
 	var tilingType = typeSelect.options[typeSelect.selectedIndex].value
 	var skeleton = document.getElementById("skeleton").value
+	var maxtiles = document.getElementById("maxtiles").value
+	var tileSymmetry = document.getElementById("tileSymmetry").value
 	var showIntermediate = document.getElementById("showIntermediate").checked
-	callhome.open("GET","http://localhost:10000/start?type="+tilingType+"&skeleton="+skeleton+"&intermediate="+showIntermediate,true)
+	callhome.open("GET","http://localhost:10000/start?type="+tilingType+"&skeleton="+skeleton+"&maxtiles="+maxtiles+"&intermediate="+showIntermediate+"&symmetry="+tileSymmetry,true)
 	callhome.send() 
 }
 
@@ -48,6 +50,18 @@ function slideshowStop() {
 	slideshowOn = 0
 }	
 
+function changeType() {
+	var typeSelect = document.getElementById("tilingType")
+	var tilingType = typeSelect.options[typeSelect.selectedIndex].value
+	if (tilingType == "skeleton") {
+		document.getElementById("skeletonOptions").style.display = "inline"
+		document.getElementById("planeOptions").style.display = "none"
+	} else {
+		document.getElementById("skeletonOptions").style.display = "none"
+		document.getElementById("planeOptions").style.display="inline"
+	}
+}
+
 function init() {
 	callhome = new XMLHttpRequest()
 }
@@ -57,8 +71,10 @@ function init() {
 
 <body onload="init()">
 <div id="menu">
-Tiling Type:&nbsp <select id="tilingType"> <option value="skeleton">Skeleton</option><option value="plane">Plane</option></select>&nbsp;
-<span id="tilingOptions">Skeleton:&nbsp;<input type="text" id="skeleton" /></span> <input type="checkbox" id="showIntermediate"/> Show Intermediate &nbsp;
+Tiling Type:&nbsp <select id="tilingType" onchange="changeType()"> <option value="skeleton">Skeleton</option><option value="plane">Plane</option></select>&nbsp;
+<span id="skeletonOptions">Skeleton:&nbsp;<input type="text" id="skeleton" value="0246" /></span> 
+<span id="planeOptions" style="display: none;">Max tiles:&nbsp;<input type="text" id="maxtiles"  /></span>
+&nbsp;Symmetry:&nbsp;<input type="text" id="tileSymmetry" value="d4" />&nbsp;<input type="checkbox" id="showIntermediate"/> Show Intermediate &nbsp;
 <a href="#foo"  onclick="startTiling()" >Start Tiling</a> <br/>
 Rendering Style: <select id="drawStyle"> <option value="edges">Edges</option><option value="plain">Plain</option><option value="debug">Debug</option></select> 
 <a href="#foo" onclick="redrawTiling()">Redraw Tiling</a> <a href="#foo"  onclick="nextTiling()" >Next Tiling</a><br/> Slideshow&nbsp; <a href="#foo" onclick="slideshowStart()">Start</a>
