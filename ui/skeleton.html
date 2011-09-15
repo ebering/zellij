@@ -8,31 +8,31 @@ var Skeleton
 var ctx
 
 function integer(a,b) {
-	this.a = a
-	this.b = b
+	this.A = a
+	this.B = b
 
 	this.Add = function(j) {
-		return new integer(this.a+j.a,this.b+j.b)
+		return new integer(this.A+j.A,this.B+j.B)
 	}
 
 	this.Sub = function(j) {
-		return new integer(this.a-j.a,this.b-j.b)
+		return new integer(this.A-j.A,this.B-j.B)
 	}
 
 	this.MultR2On2 = function() {
-		return new integer(this.b,this.a/2)
+		return new integer(this.B,this.A/2)
 	}
 
 	this.Num = function() {
-		return this.a+Math.sqrt(2)*this.b
+		return this.A+Math.sqrt(2)*this.B
 	}
 
 	this.Copy = function() {
-		return new integer(this.a,this.b)
+		return new integer(this.A,this.B)
 	}
 
 	this.Equal = function(j) {
-		return this.a == j.a && this.b == j.b
+		return this.A == j.A && this.B == j.B
 	}
 }
 
@@ -74,11 +74,11 @@ function point(x,y) {
 }
 
 function edge(a,b) {
-	this.a = a
-	this.b = b
+	this.Start = a
+	this.End = b
 
 	this.Equal = function(e) {
-		return (this.a == e.a && this.b == e.b) || (this.a == e.b && this.b == e.a)
+		return (this.Start == e.Start && this.End == e.End) || (this.Start == e.End && this.End == e.Start)
 	}
 }
 
@@ -121,6 +121,37 @@ function skeleton() {
 		this.CurrentVertex = nvi
 	}
 
+	this.DeleteVert = function() {
+		var IncidentEdges = new Array()
+		for (var i = 0; i < this.Edges.length; i++ ) {
+			if (this.Edges[i].Start == this.CurrentVertex || this.Edges[i].End == this.CurrentVertex) {
+				IncidentEdges.push(i)
+			}
+			if (this.Edges[i].Start > this.CurrentVertex) {
+				this.Edges[i].Start--
+			}
+			if (this.Edges[i].End > this.CurrentVertex) {
+				this.Edges[i].End--
+			}
+		}
+		if (IncidentEdges.length == 0 && this.Verticies.length == 1) {
+			return
+		} else if (IncidentEdges.length == 0) {
+			this.Verticies.splice(this.CurrentVertex,1)
+			this.CurrentVertex = 0
+		}
+		this.Verticies.splice(this.CurrentVertex,1)
+		if (this.Edges[IncidentEdges[0]].Start == this.CurrentVertex) {
+			this.CurrentVertex = this.Edges[IncidentEdges[0]].End
+		} else { 
+			this.CurrentVertex = this.Edges[IncidentEdges[0]].Start
+		}
+		for( var i = 0; i < IncidentEdges.length; i++ ){
+			this.Edges.splice(IncidentEdges[i]-i,1)
+		}
+	}
+
+
 	this.Undo = function() {
 		if (this.NewEdge) {
 			this.Edges.pop()
@@ -135,8 +166,8 @@ function skeleton() {
 
 	this.Draw = function (ctx) {
 		for (var i = 0; i < this.Edges.length; i++ ){
-			var st = this.Verticies[this.Edges[i].a]
-			var en = this.Verticies[this.Edges[i].b]
+			var st = this.Verticies[this.Edges[i].Start]
+			var en = this.Verticies[this.Edges[i].End]
 			ctx.beginPath()
 			ctx.moveTo(st.x.Num(),st.y.Num())
 			ctx.lineTo(en.x.Num(),en.y.Num())
@@ -161,6 +192,9 @@ function updateSkeleton(evt) {
 		key += 48
 	}
 	switch (key) {
+		case 68:
+			Skeleton.DeleteVert()
+			break
 		case 90:
 			Skeleton.Undo()
 			break

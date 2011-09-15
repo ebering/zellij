@@ -11,6 +11,8 @@ func TileSkeleton(skeleton, tileSymmetry string, showIntermediate bool) (<-chan 
 	finalTilings := make(chan *quadratic.Map, 10000)
 	halt := make(chan int, 1)
 	skel, ok := SkeletonMap(skeleton)
+	tileSymmetry = DetectSymmetryGroup(skel)
+	fmt.Fprintf(os.Stderr,"tiling with SKELETON SYMMETRY GROUP: %v\n",tileSymmetry)
 	if ok != nil {
 		panic("Bad skeleton: " + ok.String() + "\n")
 	}
