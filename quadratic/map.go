@@ -3,6 +3,7 @@ package quadratic
 import "container/vector"
 import "sort"
 import "math"
+import "os"
 
 // Stores a vertex, which is a point that has a list of incident edges
 // IMPORTANT INVARIANT: The vector of outgoing edges is a vector of things of type *Edge and it is KEPT IN SORTED ORDER BY HEADING
@@ -394,6 +395,23 @@ func (m *Map) Isomorphic(n *Map) bool {
 
 	return true
 }
+
+type Isomorphism func(*Map) *Map
+
+func (m *Map) Isomorphism(n *Map) (Isomorphism,os.Error) {
+	o := n.Copy()
+	for rots :=0; rots < 8; rots++ {
+		if m.Isomorphic(o) {
+			return func (m *Map) *Map {
+				return m.RotatePi4(rots)
+			},nil
+		}
+		o.RotatePi4(1)
+	}
+
+	return nil,os.NewError("not isomorphic at any rotation")
+}
+
 
 func (m *Map) Equal(n *Map) bool {
 	ret := true
