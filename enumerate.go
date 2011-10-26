@@ -27,7 +27,9 @@ var dir string
 var tileSymmetry string
 
 func main() {	
+	flag.Parse()
 	ZellijTilings, reset = zellij.TileSkeleton(skeleton, tileSymmetry, false)
+	Frame := zellij.SkeletonFrame(skeleton)
 	symmetryCounts := make(map[string]int)
 	for T := range(ZellijTilings) {
 		symmetryGroup := zellij.DetectSymmetryGroup(T)
@@ -38,7 +40,7 @@ func main() {
 			panic("file error")
 		}
 		enc := json.NewEncoder(save)
-		enc.Encode(T)
+		enc.Encode([]*quadratic.Map{Frame,T})
 		save.Close()
 		image := cairo.NewSurface(path.Join(dir,"svg",filename+".svg"),72*5,72*5)
 		image.SetSourceRGB(0., 0., 0.)
@@ -49,3 +51,4 @@ func main() {
 		image.Finish()
 	}
 }
+
