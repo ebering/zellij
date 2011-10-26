@@ -46,6 +46,10 @@ func SkeletonMap(spec string) (*quadratic.Map, os.Error) {
 		if f.(*quadratic.Face).Value.(string) == "outer" && f.(*quadratic.Face).Inner() {
 			f.(*quadratic.Face).Value = "active"
 		}
+
+		if f.(*quadratic.Face).Value.(string) == "inner" {
+			f.(*quadratic.Face).Value = "skeleton"
+		}
 	})
 	
 	ret.Translate(quadratic.NewVertex(ret.Centroid()),quadratic.NewVertex(quadratic.NewPoint(quadratic.Zero,quadratic.Zero)))
