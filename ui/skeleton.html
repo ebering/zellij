@@ -45,7 +45,7 @@ function point(x,y) {
 	}
 
 	this.Translate = function (dir) {
-		var vec =  new point(new integer(1,0),new integer(0,0))
+		var vec =  new point(new integer(8,4),new integer(0,0))
 		vec.RotatePi4(dir)
 		var rv = this.Copy() 
 		rv.Add(vec)
@@ -175,7 +175,7 @@ function skeleton() {
 		}
 		for (var i = 0; i < this.Verticies.length; i++ ){
 			ctx.beginPath()
-			ctx.arc(this.Verticies[i].x.Num(),this.Verticies[i].y.Num(),.2,0,2*Math.PI)
+			ctx.arc(this.Verticies[i].x.Num(),this.Verticies[i].y.Num(),2,0,2*Math.PI)
 			if (this.CurrentVertex == i) {
 				ctx.fillStyle = "#FF0000"
 			} else {
@@ -239,8 +239,7 @@ function init() {
 	Skeleton = new skeleton()
 	ctx = document.getElementById("skeletonDesign").getContext("2d")
 	ctx.translate(200,200)
-	ctx.scale(10,10)
-	ctx.lineWidth = .1
+	ctx.lineWidth = 1
 }
 
 </script>
