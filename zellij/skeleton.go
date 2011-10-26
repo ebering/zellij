@@ -9,7 +9,7 @@ func SkeletonMap(spec string) (*quadratic.Map, os.Error) {
 	var ret *quadratic.Map
 	currentPoint := quadratic.PointMustFromString("0,0,0,0")
 	origin := quadratic.PointMustFromString("0,0,0,0")
-	for _, d := range strings.Split(spec, "", -1) {
+	for _, d := range strings.Split(spec, "") {
 		translatePoint := quadratic.PointMustFromString("8,4,0,0")
 		translateSaft := quadratic.PointMustFromString("4,2,0,0")
 		saft := TileMap("beovsi", 0)
@@ -47,8 +47,23 @@ func SkeletonMap(spec string) (*quadratic.Map, os.Error) {
 			f.(*quadratic.Face).Value = "active"
 		}
 	})
-	
-	ret.Translate(quadratic.NewVertex(ret.Centroid()),quadratic.NewVertex(quadratic.NewPoint(quadratic.Zero,quadratic.Zero)))
+
+	ret.Translate(quadratic.NewVertex(ret.Centroid()), quadratic.NewVertex(quadratic.NewPoint(quadratic.Zero, quadratic.Zero)))
 
 	return ret, nil
+}
+
+func SkeletonFrame(spec string) (*quadratic.Map) {
+	verts := make([]*quadratic.Point,len(spec))
+	currentPoint := quadratic.PointMustFromString("0,0,0,0")
+	origin := quadratic.PointMustFromString("0,0,0,0")
+	for i, d := range strings.Split(spec, "") {
+		translatePoint := quadratic.PointMustFromString("8,4,0,0")
+		heading, _ := strconv.Atoi(d)
+		
+		translatePoint.RotatePi4(heading)
+		currentPoint = quadratic.MakeTranslation(origin, translatePoint)(currentPoint)
+		verts[i] = currentPoint.Copy()
+	}
+	return quadratic.PolygonMap(verts)
 }

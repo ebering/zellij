@@ -22,40 +22,39 @@ func GenerateOrbits(tile *quadratic.Map) []*quadratic.Map {
 }
 
 func GenerateOrbit(shape *quadratic.Map, symmetryGroup string) []*quadratic.Map {
-	orbit := make([]*quadratic.Map,1)
+	orbit := make([]*quadratic.Map, 1)
 	orbit[0] = shape
-	groupSymbol := strings.Split(symmetryGroup,"",-1)
+	groupSymbol := strings.Split(symmetryGroup, "")
 	if symmetryGroup == "e" {
 		return orbit
 	}
 	rotOrder, _ := strconv.Atoi(groupSymbol[1])
 	for i := 0; i < rotOrder; i++ {
-		s := shape.Copy().RotatePi4(i*(8/rotOrder))
-		if !duplicateShape(orbit,s) {
-			orbit = append(orbit,s)
+		s := shape.Copy().RotatePi4(i * (8 / rotOrder))
+		if !duplicateShape(orbit, s) {
+			orbit = append(orbit, s)
 		}
 		if groupSymbol[0] == "d" {
 			s = s.Copy().ReflectXAxis()
-			if !duplicateShape(orbit,s) {
-				orbit = append(orbit,s)
+			if !duplicateShape(orbit, s) {
+				orbit = append(orbit, s)
 			}
 		}
 	}
 	return orbit
 }
 
-func duplicateShape(shapes []*quadratic.Map,s *quadratic.Map) bool {
+func duplicateShape(shapes []*quadratic.Map, s *quadratic.Map) bool {
 	ret := false
-	for _,t := range(shapes) {
+	for _, t := range shapes {
 		ret = ret || t.Equal(s)
 	}
 	return ret
 }
 
-
 func DetectSymmetryGroup(shape *quadratic.Map) string {
 	centroid := shape.Centroid()
-	shape.Translate(quadratic.NewVertex(centroid),quadratic.NewVertex(quadratic.NewPoint(quadratic.Zero,quadratic.Zero)))
+	shape.Translate(quadratic.NewVertex(centroid), quadratic.NewVertex(quadratic.NewPoint(quadratic.Zero, quadratic.Zero)))
 	var i int
 	for i = 1; i <= 8; i = i * 2 {
 		s := shape.Copy().RotatePi4(i)
@@ -69,9 +68,9 @@ func DetectSymmetryGroup(shape *quadratic.Map) string {
 	}
 	s := shape.Copy().ReflectXAxis()
 	if s.Isomorphic(shape) {
-		return fmt.Sprintf("d%v",8/i)
+		return fmt.Sprintf("d%v", 8/i)
 	} else {
-		return fmt.Sprintf("c%v",8/i)
+		return fmt.Sprintf("c%v", 8/i)
 	}
 
 	return "e"
