@@ -230,9 +230,11 @@ function updateSkeleton(evt) {
 	ctx.clearRect(0,0,400,400)
 	ctx.restore()
 	Skeleton.Draw(ctx)
-	document.getElementById("debug1").value = Skeleton.Verticies.length
-	document.getElementById("debug2").value = Skeleton.Edges.length
 
+}
+
+function embelishSkeleton() {
+	alert(JSON.stringify(Skeleton))
 }
 
 function init() {
@@ -247,10 +249,13 @@ function init() {
 </head>
 <html>
 <body onload="init()"  onkeyup="updateSkeleton(event)"  >
-<input type="text" id="debug1" /><br/>
-<input type="text" id="debug2" /><br/>
-<input type="text" id="debug3" /><br/>
-<input type="text" id="debug4" /><br/>
-<canvas id="skeletonDesign" width="400" height="400"/>
+<pre>
+Controls: 
+-- Number pad in compass directions to draw.
+-- 'd' to delete highlit vertex.
+-- 'z' to undo (no stack, only one undo).
+</pre>
+<a href="#foo" onclick="embelishSkeleton()">Embelish</a><br />
+<canvas id="skeletonDesign" width="400" height="400" style="outline-width:4px" />
 </body>
 </html>
