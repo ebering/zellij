@@ -293,7 +293,19 @@ function init() {
 }
 
 function resetSkeleton() {
+	document.getElementById("designer").style.display = "";
+	document.getElementById("viewer").style.display = "none";
 	Skeleton = new skeleton()
+	ctx.save()
+	ctx.setTransform(1,0,0,1,0,0)
+	ctx.clearRect(0,0,400,400)
+	ctx.restore()
+	Skeleton.Draw(ctx)
+}
+
+function editAgain() {
+	document.getElementById("designer").style.display = "";
+	document.getElementById("viewer").style.display = "none";
 	ctx.save()
 	ctx.setTransform(1,0,0,1,0,0)
 	ctx.clearRect(0,0,400,400)
@@ -317,8 +329,11 @@ Controls:
 <canvas id="skeletonDesign" width="400" height="400" style="outline-width:4px" />
 </div>
 <div id="viewer" style="display:none;">
-<a href="#foo" onclick="resetSkeleton()">New design</a><br />
-<iframe src="./emptySvg" id="image" type="image/svg+xml" width=1000 height=1000 />
+<a href="#foo" onclick="resetSkeleton()">New design</a>&nbsp;<a href="#foo" onclick="editAgain()">Edit design</a><br />
+ <svg id="image" xmlns="http://www.w3.org/2000/svg" version="1.1" baseProfile="full"
+        viewBox="0 0 1000 1000">
+              </svg>
+
 </div>
 </body>
 </html>
