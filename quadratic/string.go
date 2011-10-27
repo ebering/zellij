@@ -11,5 +11,5 @@ func (p *Point) String() string {
 }
 
 func (e *Edge) String() string {
-	return fmt.Sprintf("Edge: ( %v , %v )", e.start, e.end)
+	return fmt.Sprintf("Edge: ( %v , %v ) %p", e.start, e.end,e.face)
 }

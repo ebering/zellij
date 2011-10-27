@@ -59,7 +59,7 @@ func (m *Map) ColourDebugFaces(ctx *cairo.Surface) {
 			ctx.LineTo(f.start.Float64())
 		}
 		ctx.ClosePath()
-		if F.Value.(string) == "active" {
+		if F.Value.(string) == "skeleton" {
 			ctx.SetSourceRGBA(0., 0., 1., 1.)
 		} else {
 			ctx.SetSourceRGBA(i/n, 0., 0., 1.)

@@ -7,6 +7,8 @@
 var Skeleton
 var ctx
 
+var callhome
+
 function integer(a,b) {
 	this.A = a
 	this.B = b
@@ -34,6 +36,15 @@ function integer(a,b) {
 	this.Equal = function(j) {
 		return this.A == j.A && this.B == j.B
 	}
+
+	this.toJSON = function() {
+		return new integerjs(this.A,this.B)
+	}
+}
+
+function integerjs(a,b) {
+	this.A = String(a)
+	this.B = String(b)
 }
 
 function point(x,y) {
@@ -80,6 +91,15 @@ function edge(a,b) {
 	this.Equal = function(e) {
 		return (this.Start == e.Start && this.End == e.End) || (this.Start == e.End && this.End == e.Start)
 	}
+
+	this.toJSON = function () {
+		return new edgejs(a,b)
+	}
+}
+
+function edgejs(a,b) {
+	this.Start = String(a)
+	this.End = String(b)
 }
 
 function skeleton() {
@@ -184,7 +204,17 @@ function skeleton() {
 			ctx.fill()
 		}
 	}
+
+	this.toJSON = function() {
+		return new skeletonjs(this.Verticies,this.Edges)
+	}
 }
+
+function skeletonjs(v,e) {
+	this.Verts = v
+	this.Edges = e
+}
+
 
 function updateSkeleton(evt) {
 	var key = evt.which
@@ -233,8 +263,27 @@ function updateSkeleton(evt) {
 
 }
 
-function embelishSkeleton() {
-	alert(JSON.stringify(Skeleton))
+function embellishSkeleton() {
+	var frame = JSON.stringify(Skeleton)
+	var params = "frame="+frame
+
+	callhome.open("POST","http://localhost:10000/embellish",true)
+
+	callhome.onreadystatechange = function () {
+		if (callhome.readyState == 4 && callhome.status == 200) {
+			document.getElementById("designer").style.display = "none";
+			alert("here")
+			document.GetElementById("viewer").style.display = "";
+			alert("here")
+			document.getElementById("image").replaceChild(callhome.responseXML.documentElement,im.firstChild)
+			alert("here")
+		}
+	}
+
+	callhome.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+	callhome.setRequestHeader("Content-length", params.length);
+	callhome.setRequestHeader("Connection", "close");
+	callhome.send(params)
 }
 
 function init() {
@@ -242,6 +291,12 @@ function init() {
 	ctx = document.getElementById("skeletonDesign").getContext("2d")
 	ctx.translate(200,200)
 	ctx.lineWidth = 1
+	callhome = new XMLHttpRequest()
+}
+
+function resetSkeleton() {
+	Skeleton = new skeleton()
+	updateSkeleton()
 }
 
 </script>
@@ -249,13 +304,19 @@ function init() {
 </head>
 <html>
 <body onload="init()"  onkeyup="updateSkeleton(event)"  >
+<div id="designer">
 <pre>
 Controls: 
 -- Number pad in compass directions to draw.
 -- 'd' to delete highlit vertex.
 -- 'z' to undo (no stack, only one undo).
 </pre>
-<a href="#foo" onclick="embelishSkeleton()">Embelish</a><br />
+<a href="#foo" onclick="resetSkeleton()">Reset</a>&nbsp;<a href="#foo" onclick="embellishSkeleton()">Embellish</a><br />
 <canvas id="skeletonDesign" width="400" height="400" style="outline-width:4px" />
+</div>
+<div id="viewer" style="display:none;">
+<a href="#foo" onclick="resetSkeleton()">New design</a><br />
+<embed src="./emptySvg" id="image" type="image/svg+xml" />
+</div>
 </body>
 </html>

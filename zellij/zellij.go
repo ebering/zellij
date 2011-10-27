@@ -11,7 +11,7 @@ func TileSkeleton(skeleton, tileSymmetry string, showIntermediate bool) (<-chan 
 	finalTilings := make(chan *quadratic.Map, 10000)
 	halt := make(chan int, 1)
 	skel, ok := SkeletonMap(skeleton)
-	tileSymmetry = DetectSymmetryGroup(skel)
+	//tileSymmetry = DetectSymmetryGroup(skel)
 	fmt.Fprintf(os.Stderr,"tiling with SKELETON SYMMETRY GROUP: %v\n",tileSymmetry)
 	if ok != nil {
 		panic("Bad skeleton: " + ok.String() + "\n")
@@ -120,10 +120,26 @@ func tileWorker(T *quadratic.Map, alternativeStack chan *list.List, sink chan<- 
 func Overlay(f interface{}, g interface{}) (interface{}, os.Error) {
 	if f.(string) == "inner" && g.(string) == "inner" {
 		return nil, os.NewError("cannot overlap zellij tiles")
-	} else if f.(string) == "skeleton" && g.(string) == "skeleton" {
-		return "skeleton", nil
-	} else if (f.(string) == "skeleton" && g.(string) == "inner") || (f.(string) == "inner" && g.(string) == "skeleton) {
+	} else if (f.(string) == "skeleton" && g.(string) == "inner") || (f.(string) == "inner" && g.(string) == "skeleton") {
+		return "inner",nil
 		return nil, os.NewError("cannot overlap skeletons and interiors")
+	} else if f.(string) == "skeleton" || g.(string) == "skeleton" {
+		return "skeleton",nil
+	} else if f.(string) == "inner" || g.(string) == "inner" {
+		return "inner", nil
+	} else if f.(string) == "active" || g.(string) == "active" {
+		return "active", nil
+	}
+	return "outer", nil
+}
+
+func EmbellishmentOverlay(f interface{}, g interface{}) (interface{}, os.Error) {
+	if f.(string) == "inner" && g.(string) == "inner" {
+		return nil, os.NewError("cannot overlap zellij tiles")
+	} else if (f.(string) == "skeleton" && g.(string) == "inner") || (f.(string) == "inner" && g.(string) == "skeleton") {
+		return "inner",nil
+	} else if f.(string) == "skeleton" || g.(string) == "skeleton" {
+		return "skeleton",nil
 	} else if f.(string) == "inner" || g.(string) == "inner" {
 		return "inner", nil
 	} else if f.(string) == "active" || g.(string) == "active" {

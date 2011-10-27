@@ -69,5 +69,7 @@ func SkeletonFrame(spec string) (*quadratic.Map) {
 		currentPoint = quadratic.MakeTranslation(origin, translatePoint)(currentPoint)
 		verts[i] = currentPoint.Copy()
 	}
-	return quadratic.PolygonMap(verts)
+	ret := quadratic.PolygonMap(verts)
+	ret.Translate(quadratic.NewVertex(ret.Centroid()), quadratic.NewVertex(quadratic.NewPoint(quadratic.Zero, quadratic.Zero)))
+	return ret
 }

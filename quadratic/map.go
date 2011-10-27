@@ -135,6 +135,20 @@ func (f *Face) DoEdges(D func(*Edge)) {
 	}
 }
 
+func (f *Face) Neighbors() []*Face {
+	nh := make(map[*Face]bool)
+	f.DoEdges(func (e *Edge) {
+		nh[e.twin.face] = true
+	})
+	ret := make([]*Face,0)
+	for n,t := range(nh) {
+		if t {
+			ret = append(ret,n)
+		}
+	}
+	return ret
+}
+
 func (f *Face) Inner() bool {
 	leastVtx := f.boundary.start
 	for l := f.boundary.next; l != f.boundary; l = l.next {
@@ -151,6 +165,15 @@ func (f *Face) Inner() bool {
 	return ( e2.IntHeading() == 1 && e2.prev.IntHeading() == 6) ||
 		( e2.IntHeading() == 0 && (e2.prev.IntHeading() == 6 || e2.prev.IntHeading() == 5)) ||
 		( e2.IntHeading() == 7 && (e2.prev.IntHeading() == 6 || e2.prev.IntHeading() == 5 || e2.prev.IntHeading() == 4))
+}
+
+func (f *Face) Frame() *Map {
+	verts := make([]*Point,0)
+	f.DoEdges(func (e *Edge) {
+		verts = append(verts,e.start.Point.Copy())
+	})
+
+	return PolygonMap(verts)
 }
 
 // Represents a planar map

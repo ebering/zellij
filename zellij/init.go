@@ -4,6 +4,7 @@ import "../quadratic/quadratic"
 
 var Points map[string]*quadratic.Point
 var Tiles []string
+var WhiteTiles map[string]bool
 var TileMaps []*quadratic.Map
 var Workers int = 1
 
@@ -75,10 +76,18 @@ func init() {
 	Tiles = append(Tiles, "bcfOKpjg")
 	Tiles = append(Tiles, "pOcRhQuP")
 
+	WhiteTiles = make(map[string]bool,len(Tiles))
+
 	for _, t := range Tiles {
 		base := TileMap(t, 0)
 		TileMaps = append(TileMaps, GenerateOrbits(base)...)
+		WhiteTiles[t] = false
 	}
+
+	WhiteTiles["Cnhe"] = true
+	WhiteTiles["dCrh"] = true
+	WhiteTiles["bel"] = true
+	WhiteTiles["pdCr"] = true
 
 	VertexFigures = []byte{
 		leftRotate(5, 0),

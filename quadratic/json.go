@@ -96,8 +96,37 @@ func (m *Map) UnmarshalJSON(js []byte) os.Error {
 		nf.DoEdges(func (e *Edge) {
 			e.face = nf
 		})
+		m.Faces.Push(nf)
 	}
+
+	if len(jv.Faces) == 0 {
+		edges := m.Edges.Copy()
+
+		for edges.Len() > 0 {
+			F := new(Face)
+			F.boundary = edges.Pop().(*Edge)
+			F.boundary.face = F
+			for e := F.boundary.next; e != F.boundary; e = e.next {
+				e.face = F
+				for i := 0; i < edges.Len();  {
+					if edges.At(i).(*Edge) == e {
+						edges.Delete(i)
+					} else {
+						i++
+					}
+				}
+			}
+			m.Faces.Push(F)
+		}
+	}
+
 	m.Init()
+	m.Edges.Do(func(f interface{}) {
+		if f.(*Edge).face == nil {
+			panic("unmarshal horrific failure")
+		}
+	})
+	
 	return nil
 }
 
