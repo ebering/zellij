@@ -272,11 +272,9 @@ function embellishSkeleton() {
 	callhome.onreadystatechange = function () {
 		if (callhome.readyState == 4 && callhome.status == 200) {
 			document.getElementById("designer").style.display = "none";
-			alert("here")
-			document.GetElementById("viewer").style.display = "";
-			alert("here")
-			document.getElementById("image").replaceChild(callhome.responseXML.documentElement,im.firstChild)
-			alert("here")
+			document.getElementById("viewer").style.display = "";
+			var im = document.getElementById("image")
+			im.replaceChild(callhome.responseXML.documentElement,im.firstChild)
 		}
 	}
 
@@ -296,7 +294,11 @@ function init() {
 
 function resetSkeleton() {
 	Skeleton = new skeleton()
-	updateSkeleton()
+	ctx.save()
+	ctx.setTransform(1,0,0,1,0,0)
+	ctx.clearRect(0,0,400,400)
+	ctx.restore()
+	Skeleton.Draw(ctx)
 }
 
 </script>
@@ -316,7 +318,7 @@ Controls:
 </div>
 <div id="viewer" style="display:none;">
 <a href="#foo" onclick="resetSkeleton()">New design</a><br />
-<embed src="./emptySvg" id="image" type="image/svg+xml" />
+<object data="./emptySvg" id="image" type="image/svg+xml" ></object>
 </div>
 </body>
 </html>
