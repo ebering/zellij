@@ -7,8 +7,10 @@ var Tiles []string
 var WhiteTiles map[string]bool
 var TileMaps []*quadratic.Map
 var Workers int = 1
+var OrangeBlueBrush func(F *quadratic.Face) (float64,float64,float64,float64)
 
 func init() {
+	OrangeBlueBrush = CreateZellijBrush(Colour{69./255.,81./255.,141./255.,1.},Colour{131./255.,171./255.,223./255.,1.},Colour{204./255.,143./255.,78./255.,1.},Colour{219./255.,209./255.,199./255.,1.})
 	Points = make(map[string]*quadratic.Point)
 	Points["a"], _ = quadratic.PointFromString("0,0,0,2")
 	Points["b"], _ = quadratic.PointFromString("-2,0,2,0")
@@ -62,12 +64,12 @@ func init() {
 	Tiles = append(Tiles, "jcehmrvt")
 	Tiles = append(Tiles,"cdhvtj")
 	Tiles = append(Tiles,"dCrh")
-	//Tiles = append(Tiles, "leov")
+	Tiles = append(Tiles, "leov")
 	Tiles = append(Tiles, "ibelvs")
 	Tiles = append(Tiles,"bcfdehmrvuqtspkg")
 	Tiles = append(Tiles, "bel")
-	//Tiles = append(Tiles,"jgkp")
-	//Tiles = append(Tiles,"kfmq")
+	Tiles = append(Tiles,"jgkp")
+	Tiles = append(Tiles,"kfmq")
 	Tiles = append(Tiles,"AaBeCrpHb")
 	Tiles = append(Tiles, "pdCr")
 	Tiles = append(Tiles, "jcNmrvt")
