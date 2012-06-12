@@ -15,7 +15,7 @@ type Colour struct {
 	R,G,B,A float64
 }
 
-func CreateZellijBrush( skeleton, primary, secondary Colour) func (*quadratic.Face) (float64, float64,float64, float64) {
+func CreateZellijBrush( skeleton, primary, secondary, white Colour) func (*quadratic.Face) (float64, float64,float64, float64) {
 	secondaryFaces := make(map[*quadratic.Face]bool)
 	return func(F *quadratic.Face) (float64, float64, float64, float64) {
 		if F.Value.(string) == "outer" {
@@ -25,7 +25,7 @@ func CreateZellijBrush( skeleton, primary, secondary Colour) func (*quadratic.Fa
 			return skeleton.R,skeleton.G,skeleton.B,skeleton.A
 		}
 		if WhiteTiles[F.Type] {
-			return 1.,1.,1.,1.
+			return white.R,white.G,white.B,white.A
 		}
 
 		neighbors := F.Neighbors()
@@ -48,3 +48,5 @@ func CreateZellijBrush( skeleton, primary, secondary Colour) func (*quadratic.Fa
 		return primary.R,primary.G,primary.B,primary.A
 	}
 }
+
+
