@@ -5,10 +5,10 @@ to prepare motifs in the Zellij style.
 
 DEPENDENCIES
 
-go (tested under darwin and linux 6g)
-gocairo (with the custom patches applied to make it work. Sadly the maintainer seems to have abandoned it)
-cairo
-redo (build tool)
+go (http://golang.org) (tested under darwin and linux 6g)
+gocairo (https://bitbucket.org/dethe/gocairo/) (with the custom patches applied to make it work. Sadly the maintainer seems to have abandoned it)
+cairo (http://www.cairographics.org/)
+redo (https://github.com/apenwarr/redo) (build tool)
 
 BUILDING
 
