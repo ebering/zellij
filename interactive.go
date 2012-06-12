@@ -28,6 +28,7 @@ var MotifDatabase zellij.Database
 
 func main() {
 	http.HandleFunc("/", MainScreen)
+	http.HandleFunc("/motifBuilder", MotifScreen)
 	http.HandleFunc("/start", StartTiling)
 	http.HandleFunc("/renderTiles", RenderTiles)
 	http.HandleFunc("/nextTiling", NextTiling)
@@ -43,6 +44,10 @@ func main() {
 
 func MainScreen(w http.ResponseWriter, req *http.Request) {
 	http.ServeFile(w, req, "ui/skeleton.html")
+}
+
+func MotifScreen(w http.ResponseWriter, req *http.Request) {
+	http.ServeFile(w, req, "ui/ui.html")
 }
 
 func EmptySvg(w http.ResponseWriter, req *http.Request) {
@@ -76,7 +81,7 @@ func RenderTiles(w http.ResponseWriter, req *http.Request) {
 		image.SetSourceRGBA(0., 0., 0., 1.)
 		CurrentTiling.DrawEdges(image)
 	} else if style == "plain" {
-		CurrentTiling.ColourFaces(image, zellij.PlainBrush)
+		CurrentTiling.ColourFaces(image, zellij.OrangeBlueBrush)
 	} else {
 		CurrentTiling.ColourDebugFaces(image)
 		CurrentTiling.DrawDebugEdges(image)
@@ -128,7 +133,7 @@ func EmbellishFrame(w http.ResponseWriter, req *http.Request) {
 	image.SetLineWidth(.1)
 	image.Translate(-bx.X().Float64()*4.+40, -by.Y().Float64()*4.+40)
 	image.Scale(4., 4.)
-	zig.ColourFaces(image,zellij.CreateZellijBrush(zellij.Colour{1.,0.,0.,1.},zellij.Colour{0.,1.,0.,1.},zellij.Colour{0.,0.,1.,1.}))
+	zig.ColourFaces(image,zellij.OrangeBlueBrush)
 	image.Finish()
 	http.ServeFile(w, req, "svg/embellishment.svg")
 }
