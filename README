@@ -1,0 +1,56 @@
+Zellij Prototypes.
+
+This software uses tile packing with some symmetry awareness and some domain specific heuristics
+to prepare motifs in the Zellij style.
+
+DEPENDENCIES
+
+go (tested under darwin and linux 6g)
+gocairo (with the custom patches applied to make it work. Sadly the maintainer seems to have abandoned it)
+cairo
+redo (build tool)
+
+BUILDING
+
+If all dependencies are installed:
+
+$ redo all
+
+will build the entire system.
+
+BINARIES
+
+interactive
+
+Starts a webhost listening on localhost:10000 to provide an interactive Zellij skeleton designer/embellisher.
+
+enumerate
+
+Provides an offline brute-force enumerator of possible embellishments of a given skeleton.
+
+BUGS
+
+Many. 
+
+The overlay code has an odd number of handedness errors when handling 45 degree rotations that was never completely tracked
+down, this is probably the root cause of:
+
+-Period two and three octagons not always tiled correctly.
+-Duplicate period one octagons appear in the enumeration despite this not being supposed to happen.
+
+In enumerate, when enumerating at a low symmetry order, embelishments that are rotations of one another
+are both found. No heuristic is implemented to avoid this extra work.
+
+To configure the decoration colouring (which is automatic) the code currently must be edited and recompiled.
+
+Go is a moving langauge, but has stabilized much more. This codebase is very suseptible to bitrot, worse
+is that it depends on an unmaintained package.
+
+AUTHOR
+
+Edgar A. Bering IV (trizor@gmail.com)
+
+LICENSE
+
+This code is free to be used for academic and other non-commercial pursuits, with attribution of authorship.
+All commercial rights are reserved.
