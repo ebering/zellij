@@ -1,0 +1,84 @@
+<html>
+<head>
+<title>Zelij Tiling!</title>
+
+<script type="text/javascript">
+
+var callhome;
+
+var slideshowTimer;
+var slideshowOn;
+
+function startTiling() {
+	var typeSelect = document.getElementById("tilingType")
+	var tilingType = typeSelect.options[typeSelect.selectedIndex].value
+	var skeleton = document.getElementById("skeleton").value
+	//var maxtiles = document.getElementById("maxtiles").value
+	var showIntermediate = document.getElementById("showIntermediate").checked
+	//callhome.open("GET","http://localhost:10000/start?type="+tilingType+"&skeleton="+skeleton+"+"&maxtiles="+maxtiles+"&intermediate="+showIntermediate,true)
+	callhome.open("GET","http://localhost:10000/start?type="+tilingType+"&skeleton="+skeleton+"+"&intermediate="+showIntermediate,true)
+	callhome.send() 
+}
+
+function redrawTiling() {
+	var currentTime = new Date()
+	var drawSelect = document.getElementById("drawStyle")
+	var drawStyle = drawSelect.options[drawSelect.selectedIndex].value
+	var srcstr = "renderTiles?foo="+currentTime.getTime()+"&style="+drawStyle
+
+	document.getElementById("render").src = srcstr;
+}
+
+function nextTiling() {
+	var currentTime = new Date()
+	var drawSelect = document.getElementById("drawStyle")
+	var drawStyle = drawSelect.options[drawSelect.selectedIndex].value
+	var srcstr = "nextTiling?foo="+currentTime.getTime()+"&style="+drawStyle
+
+	document.getElementById("render").src = srcstr;
+}
+
+function slideshowStart() {
+	nextTiling()
+	timeout = document.getElementById("slideshowRefresh").value
+	slideshowTimer = setTimeout("slideshowStart()",timeout)
+	slideshowOn = 1
+}
+
+function slideshowStop() {
+	clearTimeout(slideshowTimer)
+	slideshowOn = 0
+}	
+
+/*function changeTilingType() {
+	alert('here')
+	/*var typeSelect = document.getElementById("tilingType")
+	var tilingType = typeSelect.options[typeSelect.selectedIndex].value
+	if (tilingType == "plane") {
+		document.getElementById("skeletonOptions").style = "display: inline;"
+		document.getElementById("planeOptions").style = "display: none;"
+	} else {
+		document.getElementById("skeletonOptions").style = "display: none;"
+		document.getElementById("planeOptions").style = "display: inline;"
+	}*/
+}*/
+
+function init() {
+	callhome = new XMLHttpRequest()
+}
+
+</script>
+</head>
+
+<body onload="init()">
+<div id="menu">
+Tiling Type:&nbsp <select id="tilingType" onchange="redrawTiling()"> <option value="skeleton">Skeleton</option><option value="plane">Plane</option></select>&nbsp;
+<span id="skeletonOptions">Skeleton:&nbsp;<input type="text" id="skeleton" /></span> <span id="planeOptions" style="display: none;">Max tiles:&nbsp;<input type="text" id="maxtiles" /></span><input type="checkbox" id="showIntermediate"/> Show Intermediate &nbsp;
+<a href="#foo"  onclick="startTiling()" >Start Tiling</a> <br/>
+Rendering Style: <select id="drawStyle"> <option value="edges">Edges</option><option value="plain">Plain</option><option value="debug">Debug</option></select> 
+<a href="#foo" onclick="redrawTiling()">Redraw Tiling</a> <a href="#foo"  onclick="nextTiling()" >Next Tiling</a><br/> Slideshow&nbsp; <a href="#foo" onclick="slideshowStart()">Start</a>
+Refresh: <input type="text" id="slideshowRefresh" value="1000"/> <a href="#foo" onclick="slideshowStop()">Stop</a>
+</div>
+<iframe src="./emptySvg" id="render" width=600 height=600 />
+</body>
+</html>
