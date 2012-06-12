@@ -1,0 +1,51 @@
+diff -r dba727ce4ecb Makefile
+--- a/Makefile	Fri Nov 27 10:25:24 2009 -0800
++++ b/Makefile	Tue Jun 12 13:01:33 2012 -0500
+@@ -2,7 +2,7 @@
+ # Use of this source code is governed by a BSD-style
+ # license that can be found in the LICENSE file.
+ 
+-include $(GOROOT)/src/Make.$(GOARCH)
++include $(GOROOT)/src/Make.inc
+ 
+ TARG=cairo
+ CGOFILES=\
+@@ -17,4 +17,4 @@
+ 
+ %: install %.go
+ 	$(GC) $*.go
+-	$(LD) -o $@ $*.$O
+\ No newline at end of file
++	$(LD) -o $@ $*.$O
+diff -r dba727ce4ecb cairo.go
+--- a/cairo.go	Fri Nov 27 10:25:24 2009 -0800
++++ b/cairo.go	Tue Jun 12 13:01:33 2012 -0500
+@@ -1,6 +1,7 @@
+ package cairo
+ 
+ // #include <cairo/cairo.h>
++// #include <cairo/cairo-svg.h>
+ // #include <stdlib.h>
+ import "C"
+ 
+@@ -236,9 +237,9 @@
+ 
+ func Version() int	{ return int(C.cairo_version()) }
+ 
+-func NewSurface(format, width, height int) *Surface {
++func NewSurface(filename string, width, height float64) *Surface {
+ 	surface := new(Surface);
+-	surface.surface = C.cairo_image_surface_create(C.cairo_format_t(format), C.int(width), C.int(height));
++	surface.surface = C.cairo_svg_surface_create(C.CString(filename), C.double(width), C.double(height));
+ 	surface.context = C.cairo_create(surface.surface);
+ 	return surface;
+ }
+@@ -527,7 +528,7 @@
+ 	C.free(unsafe.Pointer(p));
+ }
+ 
+-func (self *Surface) Finish()	{ C.cairo_destroy(self.context) }
++func (self *Surface) Finish()	{ C.cairo_destroy(self.context); C.cairo_surface_flush(self.surface); C.cairo_surface_finish(self.surface) }
+ 
+ func (self *Surface) WriteToPNG(filename string) {
+ 	p := C.CString(filename);
